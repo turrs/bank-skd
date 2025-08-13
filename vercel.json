@@ -1,0 +1,79 @@
+{
+  "rewrites": [
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
+    }
+  ],
+  "redirects": [
+    {
+      "source": "/admin",
+      "destination": "/admin/dashboard",
+      "permanent": false
+    },
+    {
+      "source": "/question",
+      "destination": "/admin/questions",
+      "permanent": false
+    },
+    {
+      "source": "/tryout",
+      "destination": "/dashboard",
+      "permanent": false
+    },
+    {
+      "source": "/payment",
+      "destination": "/dashboard",
+      "permanent": false
+    },
+    {
+      "source": "/history",
+      "destination": "/dashboard",
+      "permanent": false
+    },
+    {
+      "source": "/review",
+      "destination": "/dashboard",
+      "permanent": false
+    },
+    {
+      "source": "/dashbord",
+      "destination": "/dashboard",
+      "permanent": false
+    },
+    {
+      "source": "/dash",
+      "destination": "/dashboard",
+      "permanent": false
+    },
+    {
+      "source": "/home",
+      "destination": "/",
+      "permanent": false
+    },
+    {
+      "source": "/landing",
+      "destination": "/",
+      "permanent": false
+    },
+    {
+      "source": "/main",
+      "destination": "/",
+      "permanent": false
+    }
+  ],
+  "headers": [
+    {
+      "source": "/assets/(.*)",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ]
+    }
+  ],
+  "buildCommand": "npm run build",
+  "outputDirectory": "dist",
+  "framework": "vite"
+}

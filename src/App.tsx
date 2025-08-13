@@ -2,7 +2,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 
-import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-router-dom";
+import { HashRouter, Routes, Route, Navigate, useLocation } from "react-router-dom";
 import { useEffect, useState, createContext, Dispatch, SetStateAction } from "react";
 import Index from "./pages/Index";
 import Login from "./pages/Login";
@@ -14,6 +14,7 @@ import PaymentPage from "./pages/PaymentPage";
 import HistoryPage from "./pages/HistoryPage";
 import TryoutReviewPage from "./pages/TryoutReviewPage";
 import NotFound from "./pages/NotFound";
+import SmartNotFound from "./components/SmartNotFound";
 import { supabase } from "@/lib/db/supabase";
 import AdminQuestions from "./pages/AdminQuestions";
 import PackageStatsPage from "./pages/PackageStatsPage";
@@ -49,6 +50,17 @@ const App = () => {
 
   useEffect(() => {
     checkAuth();
+    
+    // Listen for auth changes from login/register
+    const handleAuthChange = () => {
+      checkAuth();
+    };
+    
+    window.addEventListener('auth-change', handleAuthChange);
+    
+    return () => {
+      window.removeEventListener('auth-change', handleAuthChange);
+    };
   }, []);
 
   const checkAuth = async () => {
@@ -89,7 +101,7 @@ const App = () => {
         <Toaster />
         <Sonner />
         <UserContext.Provider value={{ user, setUser }}>
-          <BrowserRouter>
+          <HashRouter>
             <Routes>
               <Route path="/" element={<Index />} />
               <Route path="/login" element={!user ? <Login /> : <Navigate to="/dashboard" />} />
@@ -129,6 +141,7 @@ const App = () => {
                   </RouteWrapper>
                 ) : <Navigate to="/login" />
               } />
+              {/* Admin Routes */}
               <Route 
                 path="/admin" 
                 element={
@@ -136,6 +149,30 @@ const App = () => {
                     <RouteWrapper user={user} loading={loading}>
                       <ProtectedRoute requireAdmin>
                         <AdminDashboard />
+                      </ProtectedRoute>
+                    </RouteWrapper>
+                  ) : <Navigate to="/login" />
+                } 
+              />
+              <Route 
+                path="/admin/dashboard" 
+                element={
+                  user ? (
+                    <RouteWrapper user={user} loading={loading}>
+                      <ProtectedRoute requireAdmin>
+                        <AdminDashboard />
+                      </ProtectedRoute>
+                    </RouteWrapper>
+                  ) : <Navigate to="/login" />
+                } 
+              />
+              <Route 
+                path="/admin/questions" 
+                element={
+                  user ? (
+                    <RouteWrapper user={user} loading={loading}>
+                      <ProtectedRoute requireAdmin>
+                        <Navigate to="/admin" />
                       </ProtectedRoute>
                     </RouteWrapper>
                   ) : <Navigate to="/login" />
@@ -165,9 +202,11 @@ const App = () => {
                   ) : <Navigate to="/login" />
                 } 
               />
-              <Route path="*" element={<NotFound />} />
+              
+              {/* Catch-all route for 404 */}
+              <Route path="*" element={<SmartNotFound />} />
             </Routes>
-          </BrowserRouter>
+          </HashRouter>
         </UserContext.Provider>
       </TooltipProvider>
   );

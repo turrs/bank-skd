@@ -29,7 +29,12 @@ const Login = () => {
         title: "Login berhasil",
         description: `Selamat datang, ${user.email}!`,
       });
-      window.location.reload();
+      
+      // Trigger auth check in App.tsx
+      window.dispatchEvent(new Event('auth-change'));
+      
+      // Navigate to dashboard
+      navigate('/dashboard');
     } catch (error) {
       setErrorMessage(error?.message || "Email tidak ditemukan atau password salah");
       setShowErrorDialog(true);
