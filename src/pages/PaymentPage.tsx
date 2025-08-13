@@ -226,7 +226,7 @@ const PaymentPage = () => {
       });
 
       // Call Midtrans API on local server
-      const response = await fetch('http://localhost:3001/api/midtrans/create-token', {
+              const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/midtrans/create-token`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

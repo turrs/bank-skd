@@ -487,7 +487,7 @@ const Dashboard = () => {
   // Check payment status
   const checkPaymentStatus = async (paymentId) => {
     try {
-      const response = await fetch('http://localhost:3001/api/midtrans/check-status', {
+              const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/midtrans/check-status`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ payment_id: paymentId })
