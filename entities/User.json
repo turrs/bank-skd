@@ -1,0 +1,25 @@
+{
+  "name": "User",
+  "description": "Extended user entity for SKD CPNS system",
+  "properties": {
+    "phone": {
+      "type": "string",
+      "description": "User's phone number"
+    },
+    "is_admin": {
+      "type": "boolean",
+      "description": "Whether user is an admin",
+      "default": false
+    },
+    "subscription_status": {
+      "type": "string",
+      "description": "User's subscription status",
+      "enum": ["active", "inactive", "expired"],
+      "default": "inactive"
+    },
+    "subscription_expires_at": {
+      "type": "string",
+      "description": "When subscription expires"
+    }
+  }
+}

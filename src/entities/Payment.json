@@ -1,0 +1,48 @@
+{
+  "name": "Payment",
+  "table": "payments",
+  "fields": [
+    {
+      "name": "id",
+      "type": "uuid",
+      "primary": true
+    },
+    {
+      "name": "user_id",
+      "type": "uuid",
+      "references": "users.id"
+    },
+    {
+      "name": "package_id",
+      "type": "uuid",
+      "references": "question_packages.id"
+    },
+    {
+      "name": "amount",
+      "type": "integer"
+    },
+    {
+      "name": "payment_method",
+      "type": "varchar"
+    },
+    {
+      "name": "status",
+      "type": "varchar"
+    },
+    {
+      "name": "transaction_id",
+      "type": "varchar",
+      "nullable": true
+    },
+    {
+      "name": "midtrans_data",
+      "type": "jsonb",
+      "nullable": true
+    },
+    {
+      "name": "created_at",
+      "type": "timestamp",
+      "default": "now()"
+    }
+  ]
+}

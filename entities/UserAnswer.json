@@ -1,0 +1,31 @@
+{
+  "name": "UserAnswer",
+  "description": "Individual answers from users",
+  "properties": {
+    "session_id": {
+      "type": "string",
+      "description": "ID of the tryout session"
+    },
+    "question_id": {
+      "type": "string",
+      "description": "ID of the question"
+    },
+    "user_answer": {
+      "type": "string",
+      "description": "User's selected answer (A, B, C, D, E, or null)",
+      "enum": ["A", "B", "C", "D", "E"]
+    },
+    "awarded_points": {
+      "type": "number",
+      "description": "Points awarded for the selected answer"
+    },
+    "is_correct": {
+      "type": "boolean",
+      "description": "Whether the answer is correct"
+    },
+    "time_spent_seconds": {
+      "type": "number",
+      "description": "Time spent on this question in seconds"
+    }
+  }
+}

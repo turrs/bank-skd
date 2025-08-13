@@ -1,0 +1,75 @@
+{
+  "name": "QuestionTagStats",
+  "table": "question_tag_stats",
+  "fields": [
+    {
+      "name": "id",
+      "type": "uuid",
+      "primary": true
+    },
+    {
+      "name": "created_at",
+      "type": "timestamp",
+      "default": "now()"
+    },
+    {
+      "name": "session_id",
+      "type": "uuid",
+      "references": "tryout_sessions.id"
+    },
+    {
+      "name": "user_id",
+      "type": "uuid",
+      "references": "users.id"
+    },
+    {
+      "name": "package_id",
+      "type": "uuid",
+      "references": "question_packages.id"
+    },
+    {
+      "name": "main_category",
+      "type": "varchar",
+      "check": "main_category in ('TWK','TIU','TKP','Non Tag')"
+    },
+    {
+      "name": "sub_category",
+      "type": "text"
+    },
+    {
+      "name": "total_questions",
+      "type": "integer",
+      "default": 0
+    },
+    {
+      "name": "correct_answers",
+      "type": "integer",
+      "default": 0
+    },
+    {
+      "name": "wrong_answers",
+      "type": "integer",
+      "default": 0
+    },
+    {
+      "name": "unanswered",
+      "type": "integer",
+      "default": 0
+    },
+    {
+      "name": "total_points",
+      "type": "integer",
+      "default": 0
+    },
+    {
+      "name": "total_time_seconds",
+      "type": "integer",
+      "default": 0
+    },
+    {
+      "name": "average_time_seconds",
+      "type": "integer",
+      "default": 0
+    }
+  ]
+}

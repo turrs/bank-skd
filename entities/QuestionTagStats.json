@@ -1,0 +1,54 @@
+{
+  "name": "QuestionTagStats",
+  "description": "Statistics for question tags per user session",
+  "properties": {
+    "session_id": {
+      "type": "string",
+      "description": "ID of the tryout session"
+    },
+    "user_id": {
+      "type": "string",
+      "description": "ID of the user"
+    },
+    "package_id": {
+      "type": "string",
+      "description": "ID of the question package"
+    },
+    "main_category": {
+      "type": "string",
+      "description": "Main category (TWK, TIU, TKP, Non Tag)"
+    },
+    "sub_category": {
+      "type": "string",
+      "description": "Sub category/material"
+    },
+    "total_questions": {
+      "type": "number",
+      "description": "Total questions for this category in the session"
+    },
+    "correct_answers": {
+      "type": "number",
+      "description": "Number of correct answers for this category"
+    },
+    "wrong_answers": {
+      "type": "number",
+      "description": "Number of wrong answers for this category"
+    },
+    "unanswered": {
+      "type": "number",
+      "description": "Number of unanswered questions for this category"
+    },
+    "total_time_seconds": {
+      "type": "number",
+      "description": "Total time spent on questions of this category"
+    },
+    "average_time_seconds": {
+      "type": "number",
+      "description": "Average time per question for this category"
+    },
+    "total_points": {
+      "type": "number",
+      "description": "Total awarded points for this category in the session"
+    }
+  }
+}

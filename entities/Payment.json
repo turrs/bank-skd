@@ -1,0 +1,37 @@
+{
+  "name": "Payment",
+  "description": "Payment records for package access",
+  "properties": {
+    "user_id": {
+      "type": "string",
+      "description": "ID of the user making payment"
+    },
+    "package_id": {
+      "type": "string",
+      "description": "ID of the package being purchased"
+    },
+    "amount": {
+      "type": "number",
+      "description": "Payment amount"
+    },
+    "payment_method": {
+      "type": "string",
+      "description": "Payment method used",
+      "default": "QRIS"
+    },
+    "status": {
+      "type": "string",
+      "description": "Payment status",
+      "enum": ["pending", "completed", "failed", "expired"],
+      "default": "pending"
+    },
+    "qris_code": {
+      "type": "string",
+      "description": "QRIS code for payment"
+    },
+    "expires_at": {
+      "type": "string",
+      "description": "When payment expires"
+    }
+  }
+}

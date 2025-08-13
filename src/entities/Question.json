@@ -1,0 +1,99 @@
+{
+  "name": "Question",
+  "table": "questions",
+  "fields": [
+    {
+      "name": "id",
+      "type": "uuid",
+      "primary": true
+    },
+    {
+      "name": "created_at",
+      "type": "timestamp",
+      "default": "now()"
+    },
+    {
+      "name": "package_id",
+      "type": "uuid",
+      "references": "question_packages.id"
+    },
+    {
+      "name": "question_text",
+      "type": "text"
+    },
+    {
+      "name": "option_a",
+      "type": "text"
+    },
+    {
+      "name": "option_b",
+      "type": "text"
+    },
+    {
+      "name": "option_c",
+      "type": "text"
+    },
+    {
+      "name": "option_d",
+      "type": "text"
+    },
+    {
+      "name": "option_e",
+      "type": "text"
+    },
+    {
+      "name": "points_a",
+      "type": "integer",
+      "default": 0
+    },
+    {
+      "name": "points_b",
+      "type": "integer",
+      "default": 0
+    },
+    {
+      "name": "points_c",
+      "type": "integer",
+      "default": 0
+    },
+    {
+      "name": "points_d",
+      "type": "integer",
+      "default": 0
+    },
+    {
+      "name": "points_e",
+      "type": "integer",
+      "default": 0
+    },
+    {
+      "name": "correct_answer",
+      "type": "varchar",
+      "check": "correct_answer in ('A','B','C','D','E')"
+    },
+    {
+      "name": "explanation",
+      "type": "text",
+      "nullable": true
+    },
+    {
+      "name": "question_number",
+      "type": "integer",
+      "nullable": true
+    },
+    {
+      "name": "main_category",
+      "type": "varchar",
+      "check": "main_category in ('TWK','TIU','TKP','Non Tag')",
+      "nullable": true
+    },
+    {
+      "name": "sub_category",
+      "type": "text",
+      "nullable": true
+    }
+  ]
+}
+
+
+

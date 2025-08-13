@@ -1,0 +1,47 @@
+{
+  "name": "UserAnswer",
+  "table": "user_answers",
+  "fields": [
+    {
+      "name": "id",
+      "type": "uuid",
+      "primary": true
+    },
+    {
+      "name": "created_at",
+      "type": "timestamp",
+      "default": "now()"
+    },
+    {
+      "name": "session_id",
+      "type": "uuid",
+      "references": "tryout_sessions.id"
+    },
+    {
+      "name": "question_id",
+      "type": "uuid",
+      "references": "questions.id"
+    },
+    {
+      "name": "user_answer",
+      "type": "varchar",
+      "check": "user_answer in ('A','B','C','D','E')",
+      "nullable": true
+    },
+    {
+      "name": "awarded_points",
+      "type": "integer",
+      "default": 0
+    },
+    {
+      "name": "is_correct",
+      "type": "boolean",
+      "nullable": true
+    },
+    {
+      "name": "time_spent_seconds",
+      "type": "integer",
+      "nullable": true
+    }
+  ]
+}

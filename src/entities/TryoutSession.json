@@ -1,0 +1,87 @@
+{
+  "name": "TryoutSession",
+  "table": "tryout_sessions",
+  "fields": [
+    {
+      "name": "id",
+      "type": "uuid",
+      "primary": true
+    },
+    {
+      "name": "created_at",
+      "type": "timestamp",
+      "default": "now()"
+    },
+    {
+      "name": "user_id",
+      "type": "uuid",
+      "references": "users.id"
+    },
+    {
+      "name": "package_id",
+      "type": "uuid",
+      "references": "question_packages.id"
+    },
+    {
+      "name": "start_time",
+      "type": "timestamp",
+      "nullable": true
+    },
+    {
+      "name": "end_time",
+      "type": "timestamp",
+      "nullable": true
+    },
+    {
+      "name": "status",
+      "type": "varchar",
+      "default": "in_progress",
+      "check": "status in ('in_progress','completed','expired')"
+    },
+    {
+      "name": "total_score",
+      "type": "integer",
+      "default": 0
+    },
+    {
+      "name": "correct_answers",
+      "type": "integer",
+      "default": 0
+    },
+    {
+      "name": "wrong_answers",
+      "type": "integer",
+      "default": 0
+    },
+    {
+      "name": "unanswered",
+      "type": "integer",
+      "default": 0
+    },
+    {
+      "name": "passed_twk",
+      "type": "boolean",
+      "default": false
+    },
+    {
+      "name": "passed_tiu",
+      "type": "boolean",
+      "default": false
+    },
+    {
+      "name": "passed_tkp",
+      "type": "boolean",
+      "default": false
+    },
+    {
+      "name": "passed_non_tag",
+      "type": "boolean",
+      "default": false
+    },
+    {
+      "name": "passed_overall",
+      "type": "boolean",
+      "default": false
+    }
+  ]
+}

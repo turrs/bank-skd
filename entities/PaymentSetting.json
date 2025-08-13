@@ -1,0 +1,24 @@
+{
+  "name": "PaymentSetting",
+  "description": "Payment configuration settings",
+  "properties": {
+    "qris_merchant_id": {
+      "type": "string",
+      "description": "QRIS merchant ID"
+    },
+    "qris_merchant_name": {
+      "type": "string",
+      "description": "QRIS merchant name"
+    },
+    "payment_timeout_minutes": {
+      "type": "number",
+      "description": "Payment timeout in minutes",
+      "default": 30
+    },
+    "is_active": {
+      "type": "boolean",
+      "description": "Whether payment system is active",
+      "default": true
+    }
+  }
+}

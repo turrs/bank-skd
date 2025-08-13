@@ -1,0 +1,76 @@
+{
+  "name": "Question",
+  "description": "Individual questions within packages",
+  "properties": {
+    "package_id": {
+      "type": "string",
+      "description": "ID of the question package"
+    },
+    "question_text": {
+      "type": "string",
+      "description": "The question text"
+    },
+    "option_a": {
+      "type": "string",
+      "description": "Option A"
+    },
+    "option_b": {
+      "type": "string",
+      "description": "Option B"
+    },
+    "option_c": {
+      "type": "string",
+      "description": "Option C"
+    },
+    "option_d": {
+      "type": "string",
+      "description": "Option D"
+    },
+    "option_e": {
+      "type": "string",
+      "description": "Option E"
+    },
+    "points_a": {
+      "type": "number",
+      "description": "Points awarded if user selects option A"
+    },
+    "points_b": {
+      "type": "number",
+      "description": "Points awarded if user selects option B"
+    },
+    "points_c": {
+      "type": "number",
+      "description": "Points awarded if user selects option C"
+    },
+    "points_d": {
+      "type": "number",
+      "description": "Points awarded if user selects option D"
+    },
+    "points_e": {
+      "type": "number",
+      "description": "Points awarded if user selects option E"
+    },
+    "correct_answer": {
+      "type": "string",
+      "description": "Correct answer (A, B, C, D, or E)",
+      "enum": ["A", "B", "C", "D", "E"]
+    },
+    "explanation": {
+      "type": "string",
+      "description": "Explanation for the correct answer"
+    },
+    "question_number": {
+      "type": "number",
+      "description": "Question order number in package"
+    },
+    "main_category": {
+      "type": "string",
+      "description": "Main category of question (TWK, TIU, TKP, Non Tag)",
+      "enum": ["TWK", "TIU", "TKP", "Non Tag"]
+    },
+    "sub_category": {
+      "type": "string",
+      "description": "Sub category/material (free text like figural, hitung cepat, etc.)"
+    }
+  }
+}

@@ -1,0 +1,37 @@
+{
+  "name": "UserPackageAccess",
+  "table": "user_package_access",
+  "fields": [
+    {
+      "name": "id",
+      "type": "uuid",
+      "primary": true
+    },
+    {
+      "name": "user_id",
+      "type": "uuid",
+      "references": "users.id"
+    },
+    {
+      "name": "package_id",
+      "type": "uuid",
+      "references": "question_packages.id"
+    },
+    {
+      "name": "payment_id",
+      "type": "uuid",
+      "references": "payments.id",
+      "nullable": true
+    },
+    {
+      "name": "access_granted_at",
+      "type": "timestamp",
+      "default": "now()"
+    },
+    {
+      "name": "is_active",
+      "type": "boolean",
+      "default": true
+    }
+  ]
+}
