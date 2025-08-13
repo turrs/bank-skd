@@ -25,10 +25,10 @@ import { SmartLoadingSkeleton } from "@/components/SmartLoadingSkeleton";
 
 const Dashboard = () => {
   const { user, setUser } = useContext(UserContext);
-  const [packages, setPackages] = useState([]);
-  const [recentSessions, setRecentSessions] = useState([]);
-  const [userPayments, setUserPayments] = useState([]);
-  const [userPackageAccess, setUserPackageAccess] = useState([]);
+  const [packages, setPackages] = useState<any[]>([]);
+  const [recentSessions, setRecentSessions] = useState<any[]>([]);
+  const [userPayments, setUserPayments] = useState<any[]>([]);
+  const [userPackageAccess, setUserPackageAccess] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState("available");
