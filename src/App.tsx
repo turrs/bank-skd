@@ -19,6 +19,8 @@ import { supabase } from "@/lib/db/supabase";
 import AdminQuestions from "./pages/AdminQuestions";
 import PackageStatsPage from "./pages/PackageStatsPage";
 import ProtectedRoute from "./components/ProtectedRoute";
+import MentorPage from "./pages/MentorPage";
+import MentorRegistrationPage from "./pages/MentorRegistrationPage";
 
 
 
@@ -198,6 +200,28 @@ const App = () => {
                       <ProtectedRoute requireAdmin>
                         <PackageStatsPage />
                       </ProtectedRoute>
+                    </RouteWrapper>
+                  ) : <Navigate to="/login" />
+                } 
+              />
+              
+              {/* Mentor Routes */}
+              <Route 
+                path="/mentor" 
+                element={
+                  user ? (
+                    <RouteWrapper user={user} loading={loading}>
+                      <MentorPage />
+                    </RouteWrapper>
+                  ) : <Navigate to="/login" />
+                } 
+              />
+              <Route 
+                path="/mentor/register" 
+                element={
+                  user ? (
+                    <RouteWrapper user={user} loading={loading}>
+                      <MentorRegistrationPage />
                     </RouteWrapper>
                   ) : <Navigate to="/login" />
                 } 

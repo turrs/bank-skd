@@ -58,6 +58,11 @@ const Dashboard = () => {
   const [profileUpdating, setProfileUpdating] = useState(false);
   const [passwordUpdating, setPasswordUpdating] = useState(false);
 
+  // Pagination state for packages
+  const [currentAvailablePage, setCurrentAvailablePage] = useState(1);
+  const [currentMyPackagesPage, setCurrentMyPackagesPage] = useState(1);
+  const [itemsPerPage] = useState(6);
+
   // Live Chat State
   const {
     currentRoom,
@@ -85,6 +90,12 @@ const Dashboard = () => {
       navigate('/login');
       return;
     }
+    
+    // Debug log untuk user role
+    console.log('User in Dashboard:', user);
+    console.log('User role:', user.role);
+    console.log('User is_admin:', user.is_admin);
+    
     loadData();
     // Chat hanya di-initialize ketika user membuka chat
     // initializeChat();
@@ -92,15 +103,16 @@ const Dashboard = () => {
 
   // Tambahkan useEffect untuk refresh data setiap kali halaman dibuka
   useEffect(() => {
-    const handleFocus = () => {
-      if (user) {
-        loadData();
-      }
-    };
+    if (user) {
+      loadData();
+    }
+  }, []);
 
-    window.addEventListener('focus', handleFocus);
-    return () => window.removeEventListener('focus', handleFocus);
-  }, [user]);
+  // Reset pagination when tab changes
+  useEffect(() => {
+    setCurrentAvailablePage(1);
+    setCurrentMyPackagesPage(1);
+  }, [activeTab]);
 
   // Tambahkan data dummy untuk test
   useEffect(() => {
@@ -705,6 +717,27 @@ const Dashboard = () => {
                   {sidebarCollapsed && <History className="w-5 h-5 mx-auto text-blue-600" />}
                 </div>
               </Link>
+              
+              {/* Tombol Mentor */}
+              {user?.role === 'tentor' ? (
+                <Link to="/mentor" className="w-full">
+                  <div className={`w-full justify-start px-4 py-3 text-left border-b border-blue-100 rounded-none hover:bg-blue-50 transition-colors cursor-pointer ${
+                    sidebarCollapsed ? 'px-2 text-center' : 'px-4'
+                  }`}>
+                    {!sidebarCollapsed && <span className="text-blue-900">Mentor Dashboard</span>}
+                    {sidebarCollapsed && <Users className="w-5 h-5 mx-auto text-blue-600" />}
+                  </div>
+                </Link>
+              ) : (
+                <Link to="/mentor/register" className="w-full">
+                  <div className={`w-full justify-start px-4 py-3 text-left border-b border-blue-100 rounded-none hover:bg-blue-50 transition-colors cursor-pointer ${
+                    sidebarCollapsed ? 'px-2 text-center' : 'px-4'
+                  }`}>
+                    {!sidebarCollapsed && <span className="text-blue-900">Daftar Mentor</span>}
+                    {sidebarCollapsed && <Users className="w-5 h-5 mx-auto text-blue-600" />}
+                  </div>
+                </Link>
+              )}
             </TabsList>
           </Tabs>
         </div>
@@ -712,7 +745,7 @@ const Dashboard = () => {
         {/* Mobile Tab Navigation - Visible only on mobile */}
         <div className="lg:hidden bg-white/80 backdrop-blur-md shadow-sm border-b border-blue-100">
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-            <TabsList className="grid w-full grid-cols-3 bg-blue-50">
+            <TabsList className="grid w-full grid-cols-4 bg-blue-50">
               <TabsTrigger value="available" className="text-sm font-medium py-3 text-blue-700 data-[state=active]:bg-blue-600 data-[state=active]:text-white">
                 Paket Soal
               </TabsTrigger>
@@ -723,6 +756,17 @@ const Dashboard = () => {
                 <History className="w-4 h-4 mr-1" />
                 Riwayat
               </Link>
+              {user?.role === 'tentor' ? (
+                <Link to="/mentor" className="flex items-center justify-center text-sm font-medium py-3 text-blue-700 hover:bg-blue-100 transition-colors">
+                  <Users className="w-4 h-4 mr-1" />
+                  Mentor
+                </Link>
+              ) : (
+                <Link to="/mentor/register" className="flex items-center justify-center text-sm font-medium py-3 text-blue-700 hover:bg-blue-100 transition-colors">
+                  <Users className="w-4 h-4 mr-1" />
+                  Mentor
+                </Link>
+              )}
             </TabsList>
           </Tabs>
         </div>
@@ -751,6 +795,7 @@ const Dashboard = () => {
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                 {packages
                   .filter(pkg => !hasAccessToPackage(pkg))
+                  .slice((currentAvailablePage - 1) * itemsPerPage, currentAvailablePage * itemsPerPage)
                   .map((pkg) => {
                     const hasDiscount = pkg.discount_percentage > 0;
                     const isExpired = pkg.discount_end_date && new Date(pkg.discount_end_date) < new Date();
@@ -902,6 +947,56 @@ const Dashboard = () => {
                   </Card>
                 )}
               </div>
+              
+              {/* Pagination for Available Packages */}
+              {packages.filter(pkg => !hasAccessToPackage(pkg)).length > itemsPerPage && (
+                <div className="mt-8 pt-6 border-t border-gray-200">
+                  <div className="flex items-center justify-between">
+                    <div className="text-sm text-gray-700">
+                      Menampilkan {((currentAvailablePage - 1) * itemsPerPage) + 1} sampai{' '}
+                      {Math.min(currentAvailablePage * itemsPerPage, packages.filter(pkg => !hasAccessToPackage(pkg)).length)} dari{' '}
+                      {packages.filter(pkg => !hasAccessToPackage(pkg)).length} paket soal
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setCurrentAvailablePage(currentAvailablePage - 1)}
+                        disabled={currentAvailablePage === 1}
+                        className="bg-white/80 backdrop-blur-md border-blue-200 text-blue-700 hover:bg-blue-50"
+                      >
+                        Sebelumnya
+                      </Button>
+                      <div className="flex items-center space-x-1">
+                        {Array.from({ length: Math.ceil(packages.filter(pkg => !hasAccessToPackage(pkg)).length / itemsPerPage) }, (_, i) => (
+                          <Button
+                            key={i + 1}
+                            variant={currentAvailablePage === i + 1 ? "default" : "outline"}
+                            size="sm"
+                            onClick={() => setCurrentAvailablePage(i + 1)}
+                            className={`w-8 h-8 p-0 ${
+                              currentAvailablePage === i + 1 
+                                ? 'bg-blue-600 text-white' 
+                                : 'bg-white/80 backdrop-blur-md border-blue-200 text-blue-700 hover:bg-blue-50'
+                            }`}
+                          >
+                            {i + 1}
+                          </Button>
+                        ))}
+                      </div>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setCurrentAvailablePage(currentAvailablePage + 1)}
+                        disabled={currentAvailablePage === Math.ceil(packages.filter(pkg => !hasAccessToPackage(pkg)).length / itemsPerPage)}
+                        className="bg-white/80 backdrop-blur-md border-blue-200 text-blue-700 hover:bg-blue-50"
+                      >
+                        Selanjutnya
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
           )}
 
@@ -943,68 +1038,72 @@ const Dashboard = () => {
                 
                 return (
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
-                    {myPackages.map((pkg) => {
-                      const { text, action, variant, icon } = getTryoutButtonInfo(pkg);
-                      const ongoingSession = hasOngoingTryout(pkg.id);
-                      
-                      return (
-                        <Card key={pkg.id} className="hover:shadow-2xl transition-all duration-300 border-0 bg-white/80 backdrop-blur-md shadow-xl rounded-2xl overflow-hidden">
-                          <CardHeader className="bg-gradient-to-r from-blue-600 via-blue-700 to-indigo-700 text-white p-4 sm:p-6">
-                            <CardTitle className="text-base sm:text-lg text-white">{pkg.title}</CardTitle>
-                            <CardDescription className="text-blue-100 text-sm">{pkg.description}</CardDescription>
-                            
-                            {/* Status indicator for ongoing tryout */}
-                            {ongoingSession && (
-                              <div className="mt-2 flex items-center space-x-2">
-                                <div className="w-2 h-2 bg-orange-400 rounded-full animate-pulse"></div>
-                                <span className="text-xs text-orange-100 font-medium">
-                                  Tryout sedang berlangsung
-                                </span>
-                              </div>
-                            )}
-                          </CardHeader>
-                          <CardContent className="space-y-4 bg-white/90 backdrop-blur-sm p-4 sm:p-6">
-                            <div className="space-y-2">
-                              <div className="flex items-center text-sm text-gray-700">
-                                <Clock className="w-4 h-4 mr-2 text-blue-500" />
-                                <span>{pkg.duration_minutes} menit pengerjaan</span>
-                              </div>
-                              <div className="flex items-center text-sm text-gray-700">
-                                <BookOpen className="w-4 h-4 mr-2 text-blue-500" />
-                                <span>{pkg.total_questions} soal berkualitas</span>
-                              </div>
-                              <div className="flex items-center text-sm text-gray-700">
-                                <Zap className="w-4 h-4 mr-2 text-blue-500" />
-                                <span>Pembahasan lengkap</span>
-                              </div>
+                    {myPackages
+                      .slice((currentMyPackagesPage - 1) * itemsPerPage, currentMyPackagesPage * itemsPerPage)
+                      .map((pkg) => {
+                        const { text, action, variant, icon } = getTryoutButtonInfo(pkg);
+                        const ongoingSession = hasOngoingTryout(pkg.id);
+                        
+                        return (
+                          <Card key={pkg.id} className="hover:shadow-2xl transition-all duration-300 border-0 bg-white/80 backdrop-blur-md shadow-xl rounded-2xl overflow-hidden">
+                            <CardHeader className="bg-gradient-to-r from-blue-600 via-blue-700 to-indigo-700 text-white p-4 sm:p-6">
+                              <CardTitle className="text-base sm:text-lg text-white">{pkg.title}</CardTitle>
+                              <CardDescription className="text-blue-100 text-sm">{pkg.description}</CardDescription>
                               
-                              {/* Show progress if ongoing tryout */}
+                              {/* Status indicator for ongoing tryout */}
                               {ongoingSession && (
-                                <div className="pt-2 border-t border-gray-200">
-                                  <div className="flex items-center justify-between text-xs text-gray-600 mb-1">
-                                    <span>Progress Tryout</span>
-                                    <span>Berlangsung</span>
-                                  </div>
-                                  <div className="w-full bg-gray-200 rounded-full h-2">
-                                    <div className="bg-orange-500 h-2 rounded-full animate-pulse" style={{ width: '25%' }}></div>
-                                  </div>
+                                <div className="mt-2 flex items-center space-x-2">
+                                  <div className="w-2 h-2 bg-orange-400 rounded-full animate-pulse"></div>
+                                  <span className="text-xs text-orange-100 font-medium">
+                                    Tryout sedang berlangsung
+                                  </span>
                                 </div>
                               )}
-                            </div>
-                            
-                           
-                            <Button 
-                              className={`w-full ${variant} hover:scale-105 transition-all duration-300 shadow-xl hover:shadow-2xl text-white font-bold`}
-                              onClick={action}
-                            >
-                              {icon}
-                              {text}
-                            </Button>
-                          </CardContent>
-                        </Card>
-                      );
-                    })}
+                            </CardHeader>
+                            <CardContent className="space-y-4 bg-white/90 backdrop-blur-sm p-4 sm:p-6">
+                              <div className="space-y-2">
+                                <div className="flex items-center text-sm text-gray-700">
+                                  <Clock className="w-4 h-4 mr-2 text-blue-500" />
+                                  <span>{pkg.duration_minutes} menit pengerjaan</span>
+                                </div>
+                                <div className="flex items-center text-sm text-gray-700">
+                                  <BookOpen className="w-4 h-4 mr-2 text-blue-500" />
+                                  <span>{pkg.total_questions} soal berkualitas</span>
+                                </div>
+                                <div className="flex items-center text-sm text-gray-700">
+                                  <Zap className="w-4 h-4 mr-2 text-blue-500" />
+                                  <span>Pembahasan lengkap</span>
+                                </div>
+                                
+                                {/* Show progress if ongoing tryout */}
+                                {ongoingSession && (
+                                  <div className="pt-2 border-t border-gray-200">
+                                    <div className="flex items-center justify-between text-xs text-gray-600 mb-1">
+                                      <span>Progress Tryout</span>
+                                      <span>Berlangsung</span>
+                                    </div>
+                                    <div className="w-full bg-gray-200 rounded-full h-2">
+                                      <div className="bg-orange-500 h-2 rounded-full animate-pulse" style={{ width: '25%' }}></div>
+                                    </div>
+                                  </div>
+                                )}
+                              </div>
+                              
+                             
+                              <Button 
+                                className={`w-full ${variant} hover:scale-105 transition-all duration-300 shadow-xl hover:shadow-2xl text-white font-bold`}
+                                onClick={action}
+                              >
+                                {icon}
+                                {text}
+                              </Button>
+                            </CardContent>
+                          </Card>
+                        );
+                      })}
                   </div>
+                  
+
                 );
               })()}
             </div>
@@ -1429,7 +1528,7 @@ const Dashboard = () => {
                 <Button 
                   onClick={() => setShowChangePassword(true)}
                   variant="outline"
-                  className="w-full border-blue-200 text-blue-700 hover:bg-blue-50"
+                  className="w-full border-blue-200 text-blue-700 hover:bg-blue-50 hover:border-blue-300 transition-all duration-200 hover:scale-105 shadow-sm hover:shadow-md"
                 >
                   <Lock className="w-4 h-4 mr-2" />
                   Ganti Password

@@ -40,6 +40,8 @@ export interface VoucherValidationResult {
   discount_amount?: number;
   original_price?: number;
   final_price?: number;
+  used_count?: number;
+  usage_limit?: number;
 }
 
 export interface CreateVoucherData {

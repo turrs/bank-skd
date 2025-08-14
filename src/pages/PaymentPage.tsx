@@ -98,6 +98,99 @@ const PaymentPage = () => {
     setAppliedVoucher(undefined);
   };
 
+  // Helper function to handle voucher usage
+  const handleVoucherUsage = async (paymentId: string, isFreePackage: boolean = false) => {
+    if (!appliedVoucher || !appliedVoucher.voucher_id) return;
+    
+    try {
+      console.log('🎫 Processing voucher usage for payment:', paymentId);
+      
+      // 1. Update voucher used_count
+      const { data: voucherData, error: voucherError } = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/rest/v1/vouchers?id=eq.${appliedVoucher.voucher_id}`,
+        {
+          method: 'PATCH',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
+            'apikey': import.meta.env.VITE_SUPABASE_ANON_KEY,
+            'Prefer': 'return=representation'
+          },
+          body: JSON.stringify({
+            used_count: (appliedVoucher.used_count || 0) + 1,
+            updated_at: new Date().toISOString()
+          })
+        }
+      ).then(res => res.json());
+      
+      if (voucherError) {
+        console.error('❌ Error updating voucher used_count:', voucherError);
+      } else {
+        console.log('✅ Voucher used_count updated:', voucherData);
+      }
+      
+      // 2. Record voucher usage
+      const voucherUsageData = {
+        voucher_id: appliedVoucher.voucher_id,
+        user_id: user.id,
+        package_id: packageId,
+        payment_id: paymentId,
+        discount_amount: Math.round(appliedVoucher.discount_amount || 0),
+        original_price: Math.round(packageData.price),
+        final_price: Math.round(appliedVoucher.final_price || 0),
+        used_at: new Date().toISOString()
+      };
+      
+      const { data: usageData, error: usageError } = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/rest/v1/voucher_usage`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
+            'apikey': import.meta.env.VITE_SUPABASE_ANON_KEY,
+            'Prefer': 'return=representation'
+          },
+          body: JSON.stringify(voucherUsageData)
+        }
+      ).then(res => res.json());
+      
+      if (usageError) {
+        console.error('❌ Error recording voucher usage:', usageError);
+      } else {
+        console.log('✅ Voucher usage recorded:', usageData);
+      }
+      
+      // 3. Check if voucher is now exhausted
+      const newUsedCount = (appliedVoucher.used_count || 0) + 1;
+      if (newUsedCount >= (appliedVoucher.usage_limit || 1)) {
+        console.log('⚠️ Voucher usage limit reached, deactivating voucher');
+        
+        // Deactivate voucher if usage limit reached
+        await fetch(
+          `${import.meta.env.VITE_SUPABASE_URL}/rest/v1/vouchers?id=eq.${appliedVoucher.voucher_id}`,
+          {
+            method: 'PATCH',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
+              'apikey': import.meta.env.VITE_SUPABASE_ANON_KEY,
+              'Prefer': 'return=representation'
+            },
+            body: JSON.stringify({
+              is_active: false,
+              updated_at: new Date().toISOString()
+            })
+          }
+        );
+      }
+      
+    } catch (voucherError) {
+      console.error('💥 Error handling voucher usage:', voucherError);
+      // Don't fail the payment if voucher handling fails
+    }
+  };
+
   const handlePayment = async () => {
     if (!formData.phone || !formData.email) {
       toast({
@@ -174,6 +267,9 @@ const PaymentPage = () => {
             
             const accessResult = await UserPackageAccess.create(accessData);
             console.log('Package access granted:', accessResult);
+            
+            // Handle voucher usage for free package
+            await handleVoucherUsage(payment.id, true);
           } else {
             console.log('User already has access to this package');
           }
@@ -299,6 +395,9 @@ const PaymentPage = () => {
         transaction_id: result.transaction_id,
         midtrans_data: result
       });
+
+      // Handle voucher usage if voucher was applied
+      await handleVoucherUsage(paymentId);
 
       // Check if user already has access to this package
       const existingAccess = await UserPackageAccess.list();

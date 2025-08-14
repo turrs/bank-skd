@@ -62,6 +62,13 @@
       "name": "is_featured",
       "type": "boolean",
       "description": "Apakah paket featured untuk marketing"
+    },
+    {
+      "name": "creator_id",
+      "type": "uuid",
+      "references": "users.id",
+      "nullable": true,
+      "description": "ID of the user who created this package (mentor or admin)"
     }
   ]
 }

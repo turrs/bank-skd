@@ -333,11 +333,11 @@ const HistoryPage = () => {
                     {visibleSessions.map((session, index) => {
                       const globalIndex = (currentPage - 1) * sessionsPerPage + index;
                       return (
-                        <Card 
-                          key={session.id} 
-                          className={`cursor-pointer transition-all duration-300 hover:shadow-xl border-0 bg-white/80 backdrop-blur-md shadow-lg rounded-xl ${
-                            selectedSession?.id === session.id ? 'ring-2 ring-blue-500 shadow-2xl' : ''
-                          }`}
+                    <Card 
+                      key={session.id} 
+                      className={`cursor-pointer transition-all duration-300 hover:shadow-xl border-0 bg-white/80 backdrop-blur-md shadow-lg rounded-xl ${
+                        selectedSession?.id === session.id ? 'ring-2 ring-blue-500 shadow-2xl' : ''
+                      }`}
                           onClick={() => {
                             if (!session || !session.id) return; // Safety check
                             setSelectedSession(session);
@@ -350,60 +350,60 @@ const HistoryPage = () => {
                               setIsDetailModalOpen(true);
                             }
                           }}
-                        >
-                          <CardContent className="p-4">
-                            <div className="flex justify-between items-start mb-2">
-                              <div className="flex items-center gap-3">
-                                {/* Nomor urutan dengan badge */}
-                                <div className="flex-shrink-0">
-                                  <Badge variant="outline" className="w-8 h-8 rounded-full p-0 flex items-center justify-center text-xs font-bold">
+                    >
+                      <CardContent className="p-4">
+                        <div className="flex justify-between items-start mb-2">
+                          <div className="flex items-center gap-3">
+                            {/* Nomor urutan dengan badge */}
+                            <div className="flex-shrink-0">
+                              <Badge variant="outline" className="w-8 h-8 rounded-full p-0 flex items-center justify-center text-xs font-bold">
                                     #{globalIndex + 1}
-                                  </Badge>
-                                </div>
-                                <div>
-                                  <h3 className="font-medium">
-                                    {packages[session.package_id]?.title || 'Paket Tidak Diketahui'}
-                                  </h3>
-                                  <p className="text-sm text-gray-600">
-                                    {new Date(session.created_at).toLocaleDateString('id-ID', {
-                                      year: 'numeric',
-                                      month: 'long',
-                                      day: 'numeric',
-                                      hour: '2-digit',
-                                      minute: '2-digit'
-                                    })}
-                                  </p>
-                                </div>
-                              </div>
-                              <Badge variant={session.status === 'completed' ? 'default' : 'secondary'}>
-                                {session.status === 'completed' ? 'Selesai' : 'Berlangsung'}
                               </Badge>
                             </div>
-                            
-                            {session.status === 'completed' && (
-                              <div className="grid grid-cols-3 gap-4 text-sm">
-                                <div>
-                                  <span className="text-gray-600">Skor:</span>
-                                  <span className={`ml-1 font-bold ${getScoreColor(session.total_score)}`}>
-                                    {session.total_score}
-                                  </span>
-                                </div>
-                                <div>
-                                  <span className="text-gray-600">Benar:</span>
-                                  <span className="ml-1 font-medium text-green-600">
-                                    {session.correct_answers}
-                                  </span>
-                                </div>
-                                <div>
-                                  <span className="text-gray-600">Salah:</span>
-                                  <span className="ml-1 font-medium text-red-600">
-                                    {session.wrong_answers}
-                                  </span>
-                                </div>
-                              </div>
-                            )}
-                          </CardContent>
-                        </Card>
+                            <div>
+                              <h3 className="font-medium">
+                                {packages[session.package_id]?.title || 'Paket Tidak Diketahui'}
+                              </h3>
+                              <p className="text-sm text-gray-600">
+                                {new Date(session.created_at).toLocaleDateString('id-ID', {
+                                  year: 'numeric',
+                                  month: 'long',
+                                  day: 'numeric',
+                                  hour: '2-digit',
+                                  minute: '2-digit'
+                                })}
+                              </p>
+                            </div>
+                          </div>
+                          <Badge variant={session.status === 'completed' ? 'default' : 'secondary'}>
+                            {session.status === 'completed' ? 'Selesai' : 'Berlangsung'}
+                          </Badge>
+                        </div>
+                        
+                          {session.status === 'completed' && (
+                          <div className="grid grid-cols-3 gap-4 text-sm">
+                            <div>
+                              <span className="text-gray-600">Skor:</span>
+                              <span className={`ml-1 font-bold ${getScoreColor(session.total_score)}`}>
+                                {session.total_score}
+                              </span>
+                            </div>
+                            <div>
+                              <span className="text-gray-600">Benar:</span>
+                              <span className="ml-1 font-medium text-green-600">
+                                {session.correct_answers}
+                              </span>
+                            </div>
+                            <div>
+                              <span className="text-gray-600">Salah:</span>
+                              <span className="ml-1 font-medium text-red-600">
+                                {session.wrong_answers}
+                              </span>
+                            </div>
+                          </div>
+                        )}
+                      </CardContent>
+                    </Card>
                       );
                     })}
                   </div>
@@ -483,17 +483,17 @@ const HistoryPage = () => {
                               minute: '2-digit'
                             })}
                           </CardDescription>
-                          {/* Review Button */}
-                          {selectedSession.status === 'completed' && (
-                            <div className="mt-4">
-                              <Link to={`/review/${selectedSession.id}`}>
-                                <Button className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 shadow-lg hover:shadow-xl transition-all duration-200">
+                           {/* Review Button */}
+                      {selectedSession.status === 'completed' && (
+                        <div className="mt-4">
+                          <Link to={`/review/${selectedSession.id}`}>
+                            <Button className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 shadow-lg hover:shadow-xl transition-all duration-200">
                                   <BarChart3 className="w-4 h-4 mr-2" />
-                                  Review Jawaban Lengkap
-                                </Button>
-                              </Link>
-                            </div>
-                          )}
+                              Review Jawaban Lengkap
+                            </Button>
+                          </Link>
+                        </div>
+                      )}
                         </CardHeader>
                         <CardContent>
                           {selectedSession.status === 'completed' ? (
@@ -565,16 +565,16 @@ const HistoryPage = () => {
                                 </div>
                               ) : tagPointsBySession[selectedSession.id] ? (
                                 <>
-                                  <div className="text-xs text-gray-600 mb-1">Poin per Kategori:</div>
-                                  <div className="flex flex-wrap gap-2">
-                                    {(['TWK','TIU','TKP','Non Tag'] as const).map((cat) => {
-                                      const val = tagPointsBySession[selectedSession.id][cat];
-                                      if (val === undefined) return null;
-                                      return (
-                                        <Badge key={cat} variant="outline">{cat}: {val}</Badge>
-                                      );
-                                    })}
-                                  </div>
+                              <div className="text-xs text-gray-600 mb-1">Poin per Kategori:</div>
+                              <div className="flex flex-wrap gap-2">
+                                {(['TWK','TIU','TKP','Non Tag'] as const).map((cat) => {
+                                  const val = tagPointsBySession[selectedSession.id][cat];
+                                  if (val === undefined) return null;
+                                  return (
+                                    <Badge key={cat} variant="outline">{cat}: {val}</Badge>
+                                  );
+                                })}
+                              </div>
                                 </>
                               ) : (
                                 <div className="text-center py-2">
