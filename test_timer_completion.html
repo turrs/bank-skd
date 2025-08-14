@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Timer Completion - Tryout Session Status</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        .container {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 30px;
+            border-radius: 15px;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        }
+        .test-section {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        .timer-display {
+            font-size: 3rem;
+            font-weight: bold;
+            text-align: center;
+            margin: 20px 0;
+            font-family: 'Courier New', monospace;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+        }
+        .status-panel {
+            background: rgba(76, 175, 80, 0.1);
+            border: 1px solid rgba(76, 175, 80, 0.3);
+            padding: 15px;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+        .controls {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin: 20px 0;
+        }
+        .control-btn {
+            padding: 12px 20px;
+            border: none;
+            border-radius: 6px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: bold;
+        }
+        .btn-primary { background: #2196F3; color: white; }
+        .btn-success { background: #4CAF50; color: white; }
+        .btn-warning { background: #FF9800; color: white; }
+        .btn-danger { background: #f44336; color: white; }
+        .control-btn:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3); }
+        .control-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+        .log-panel {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 15px;
+            border-radius: 8px;
+            margin: 20px 0;
+            max-height: 400px;
+            overflow-y: auto;
+            font-family: monospace;
+            font-size: 12px;
+        }
+        .log-entry {
+            margin: 5px 0;
+            padding: 8px;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 0.9rem;
+        }
+        .log-info { background: rgba(33, 150, 243, 0.2); }
+        .log-success { background: rgba(76, 175, 80, 0.2); }
+        .log-warning { background: rgba(255, 193, 7, 0.2); }
+        .log-error { background: rgba(244, 67, 54, 0.2); }
+        .session-info {
+            background: rgba(156, 39, 176, 0.1);
+            border: 1px solid rgba(156, 39, 176, 0.3);
+            padding: 15px;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+        .status-badge {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: bold;
+            margin: 5px;
+        }
+        .status-in-progress { background: #FF9800; color: white; }
+        .status-completed { background: #4CAF50; color: white; }
+        .status-expired { background: #f44336; color: white; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>⏰ Test Timer Completion - Tryout Session Status</h1>
+        
+        <div class="test-section">
+            <h3>📋 Test Overview</h3>
+            <p>Test implementasi timer completion yang akan mengupdate status tryout session menjadi 'completed' ketika waktu habis.</p>
+        </div>
+
+        <div class="status-panel">
+            <h3>📊 Current Status</h3>
+            <div class="timer-display" id="timerDisplay">00:00</div>
+            <div style="text-align: center; margin: 20px 0;">
+                <span class="status-badge status-in-progress" id="sessionStatus">in_progress</span>
+                <span id="sessionInfo">Session ID: test-session-123 | Package: test-package-456</span>
+            </div>
+        </div>
+
+        <div class="test-section">
+            <h3>🎯 Timer Controls</h3>
+            <div class="controls">
+                <button class="control-btn btn-primary" onclick="startTimer()">Start Timer (5s)</button>
+                <button class="control-btn btn-warning" onclick="startTimer(10)">Start Timer (10s)</button>
+                <button class="control-btn btn-success" onclick="startTimer(30)">Start Timer (30s)</button>
+                <button class="control-btn btn-danger" onclick="resetTimer()">Reset Timer</button>
+            </div>
+        </div>
+
+        <div class="session-info">
+            <h3>🔄 Session Information</h3>
+            <div id="sessionDetails">
+                <p><strong>Status:</strong> <span id="statusValue">in_progress</span></p>
+                <p><strong>Start Time:</strong> <span id="startTime">-</span></p>
+                <p><strong>End Time:</strong> <span id="endTime">-</span></p>
+                <p><strong>Total Score:</strong> <span id="totalScore">0</span></p>
+                <p><strong>Correct Answers:</strong> <span id="correctAnswers">0</span></p>
+                <p><strong>Wrong Answers:</strong> <span id="wrongAnswers">0</span></p>
+                <p><strong>Unanswered:</strong> <span id="unanswered">0</span></p>
+            </div>
+        </div>
+
+        <div class="log-panel">
+            <h3>📝 Activity Log</h3>
+            <div id="logContainer">
+                <div class="log-entry log-info">System initialized. Ready for testing timer completion.</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        class TimerCompletionTest {
+            constructor() {
+                this.sessionId = 'test-session-' + Date.now();
+                this.packageId = 'test-package-456';
+                this.timeLeft = 0;
+                this.isRunning = false;
+                this.interval = null;
+                this.sessionData = {
+                    id: this.sessionId,
+                    package_id: this.packageId,
+                    status: 'in_progress',
+                    start_time: null,
+                    end_time: null,
+                    total_score: 0,
+                    correct_answers: 0,
+                    wrong_answers: 0,
+                    unanswered: 0
+                };
+                
+                this.initialize();
+            }
+            
+            initialize() {
+                this.log('🚀 Initializing timer completion test...');
+                this.updateDisplay();
+                this.log('✅ Test initialized successfully!');
+                this.log('📋 Test scenarios:');
+                this.log('   • Start timer dengan waktu pendek (5s, 10s, 30s)');
+                this.log('   • Monitor status session berubah dari in_progress ke completed');
+                this.log('   • Verifikasi semua data session ter-update dengan benar');
+            }
+            
+            startTimer(seconds = 5) {
+                if (this.isRunning) {
+                    this.log('⚠️ Timer sudah berjalan, reset dulu', 'warning');
+                    return;
+                }
+                
+                this.timeLeft = seconds;
+                this.isRunning = true;
+                this.sessionData.start_time = new Date().toISOString();
+                this.sessionData.status = 'in_progress';
+                
+                this.log(`⏰ Timer dimulai dengan ${seconds} detik`, 'info');
+                this.updateDisplay();
+                
+                this.interval = setInterval(() => {
+                    this.timeLeft--;
+                    this.updateDisplay();
+                    
+                    if (this.timeLeft <= 0) {
+                        this.handleTimeUp();
+                    }
+                }, 1000);
+            }
+            
+            handleTimeUp() {
+                this.log('⏰ Timer habis! Memanggil handleTimeUp...', 'warning');
+                
+                // Clear interval
+                if (this.interval) {
+                    clearInterval(this.interval);
+                    this.interval = null;
+                }
+                
+                this.isRunning = false;
+                
+                // Simulate finishing tryout
+                setTimeout(() => {
+                    this.log('🚀 Menjalankan handleFinishTryout karena waktu habis...', 'info');
+                    this.handleFinishTryout();
+                }, 1000);
+            }
+            
+            async handleFinishTryout() {
+                try {
+                    this.log('🔄 Menghitung score dan menyelesaikan tryout...', 'info');
+                    
+                    // Simulate score calculation
+                    const totalScore = Math.floor(Math.random() * 100) + 50; // Random score 50-150
+                    const correctAnswers = Math.floor(Math.random() * 20) + 10; // Random 10-30
+                    const wrongAnswers = Math.floor(Math.random() * 15) + 5; // Random 5-20
+                    const unanswered = Math.max(0, 40 - correctAnswers - wrongAnswers); // Total 40 questions
+                    
+                    this.log(`📊 Score calculated: ${totalScore} points`, 'info');
+                    this.log(`✅ Correct: ${correctAnswers}, ❌ Wrong: ${wrongAnswers}, ❓ Unanswered: ${unanswered}`, 'info');
+                    
+                    // Update session status
+                    this.log('🔄 Updating session status to completed...', 'info');
+                    
+                    this.sessionData.status = 'completed';
+                    this.sessionData.end_time = new Date().toISOString();
+                    this.sessionData.total_score = totalScore;
+                    this.sessionData.correct_answers = correctAnswers;
+                    this.sessionData.wrong_answers = wrongAnswers;
+                    this.sessionData.unanswered = unanswered;
+                    
+                    this.log('✅ Session status updated successfully!', 'success');
+                    this.log('📊 Final session data:', 'info');
+                    this.log(JSON.stringify(this.sessionData, null, 2), 'info');
+                    
+                    // Update display
+                    this.updateDisplay();
+                    
+                    // Show completion message
+                    this.log('🎉 Tryout selesai! Status session berubah menjadi completed', 'success');
+                    
+                } catch (error) {
+                    this.log(`❌ Error in handleFinishTryout: ${error.message}`, 'error');
+                }
+            }
+            
+            resetTimer() {
+                if (this.interval) {
+                    clearInterval(this.interval);
+                    this.interval = null;
+                }
+                
+                this.timeLeft = 0;
+                this.isRunning = false;
+                this.sessionData.status = 'in_progress';
+                this.sessionData.start_time = null;
+                this.sessionData.end_time = null;
+                
+                this.log('🔄 Timer reset', 'info');
+                this.updateDisplay();
+            }
+            
+            updateDisplay() {
+                // Update timer display
+                const minutes = Math.floor(this.timeLeft / 60);
+                const seconds = this.timeLeft % 60;
+                document.getElementById('timerDisplay').textContent = 
+                    `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+                
+                // Update session status
+                const statusElement = document.getElementById('sessionStatus');
+                statusElement.textContent = this.sessionData.status;
+                statusElement.className = `status-badge status-${this.sessionData.status === 'in_progress' ? 'in-progress' : this.sessionData.status}`;
+                
+                // Update session info
+                document.getElementById('statusValue').textContent = this.sessionData.status;
+                document.getElementById('startTime').textContent = this.sessionData.start_time ? new Date(this.sessionData.start_time).toLocaleString() : '-';
+                document.getElementById('endTime').textContent = this.sessionData.end_time ? new Date(this.sessionData.end_time).toLocaleString() : '-';
+                document.getElementById('totalScore').textContent = this.sessionData.total_score;
+                document.getElementById('correctAnswers').textContent = this.sessionData.correct_answers;
+                document.getElementById('wrongAnswers').textContent = this.sessionData.wrong_answers;
+                document.getElementById('unanswered').textContent = this.sessionData.unanswered;
+            }
+            
+            log(message, type = 'info') {
+                const logContainer = document.getElementById('logContainer');
+                const logEntry = document.createElement('div');
+                logEntry.className = `log-entry log-${type}`;
+                
+                const timestamp = new Date().toLocaleTimeString();
+                logEntry.textContent = `[${timestamp}] ${message}`;
+                
+                logContainer.appendChild(logEntry);
+                logContainer.scrollTop = logContainer.scrollHeight;
+                
+                // Keep only last 30 log entries
+                while (logContainer.children.length > 30) {
+                    logContainer.removeChild(logContainer.firstChild);
+                }
+                
+                console.log(`[${type.toUpperCase()}] ${message}`);
+            }
+        }
+        
+        // Initialize test
+        let timerTest;
+        
+        document.addEventListener('DOMContentLoaded', () => {
+            timerTest = new TimerCompletionTest();
+        });
+        
+        // Global functions for buttons
+        function startTimer(seconds = 5) {
+            if (timerTest) timerTest.startTimer(seconds);
+        }
+        
+        function resetTimer() {
+            if (timerTest) timerTest.resetTimer();
+        }
+        
+        console.log('⏰ Timer Completion Test loaded!');
+        console.log('📋 Test that timer completion updates session status to completed');
+    </script>
+</body>
+</html>

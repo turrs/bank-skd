@@ -8,6 +8,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Clock, ArrowLeft, ArrowRight, Flag, ChevronLeft, ChevronRight, CheckCircle, Eye, EyeOff, MoreHorizontal, BookOpen, BarChart3 } from "lucide-react";
 import { QuestionPackage, Question, TryoutSession, UserAnswer, QuestionTagStats } from "@/entities";
 import { toast } from "@/hooks/use-toast";
+import { useTimer } from "@/hooks/useTimer";
+import { useTryoutStateManager } from "@/hooks/useTryoutStateManager";
 import { UserContext } from "@/App";
 
 const TryoutPage = () => {
@@ -19,11 +21,9 @@ const TryoutPage = () => {
   const [session, setSession] = useState(null);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [answers, setAnswers] = useState({});
-  const [timeLeft, setTimeLeft] = useState(0);
   const [loading, setLoading] = useState(true);
   const [questionStartTime, setQuestionStartTime] = useState(Date.now());
   const [questionTimes, setQuestionTimes] = useState({});
-  const intervalRef = useRef(null);
   const [showResultDialog, setShowResultDialog] = useState(false);
   const [resultData, setResultData] = useState<any>(null);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
@@ -33,40 +33,194 @@ const TryoutPage = () => {
   const [showFinishConfirmation, setShowFinishConfirmation] = useState(false);
   const [isCalculatingScore, setIsCalculatingScore] = useState(false);
 
+  // Initialize timer with custom hook
+  const { timeLeft, isPaused, start: startTimer, setTime: setTimerTime, forcePause: forcePauseTimer, formatTime } = useTimer({
+    initialTime: 0,
+    onTimeUp: () => {
+      // Define handleTimeUp here to avoid hoisting issues
+      if (sessionId) {
+        handleTimeUp();
+      }
+    },
+    autoStart: false
+  });
+
+  // Initialize hybrid tryout state manager
+  const {
+    state: tryoutState,
+    pauseTimer: pauseTryoutState,
+    resumeTimer: resumeTryoutState,
+    updateQuestionState,
+    updateTimeLeft,
+    forceSync,
+    getRecoveryInfo,
+    isOnline,
+    isRecovering
+  } = useTryoutStateManager({
+    sessionId: sessionId || '',
+    packageId: packageId || '',
+    initialTimeLeft: timeLeft,
+    onStateChange: (state) => {
+      console.log('🔄 Tryout state changed:', state);
+    },
+    onRecovery: (recoveredState) => {
+      console.log('✅ Tryout state recovered:', recoveredState);
+      // Restore timer state
+      if (recoveredState.timeLeft > 0) {
+        setTimerTime(recoveredState.timeLeft);
+        setCurrentQuestionIndex(recoveredState.currentQuestionIndex);
+        setAnswers(recoveredState.answers);
+        
+        // Show recovery notification
+        toast({
+          title: "🔄 Tryout Dipulihkan",
+          description: `Progress tryout berhasil dipulihkan. Waktu tersisa: ${Math.floor(recoveredState.timeLeft / 60)}:${(recoveredState.timeLeft % 60).toString().padStart(2, '0')}`,
+          variant: "default",
+        });
+      }
+    }
+  });
+
+  // Add useEffect to start timer when time is set
+  useEffect(() => {
+    if (timeLeft > 0 && !isPaused) {
+      startTimer();
+      console.log('🚀 Timer started with time:', timeLeft, 'seconds');
+      
+      // Update tryout state manager
+      updateTimeLeft(timeLeft);
+    }
+  }, [timeLeft, isPaused, startTimer, updateTimeLeft]);
+
+  // Add useEffect to handle timer pause/resume based on page visibility
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.hidden) {
+        // Page hidden - pause timer and tryout state
+        if (timeLeft > 0 && sessionId) {
+          forcePauseTimer();
+          pauseTryoutState();
+          console.log('⏸️ Timer and tryout state paused due to page hidden');
+        }
+      } else {
+        // Page visible - resume timer and tryout state if they were paused
+        if (isPaused && timeLeft > 0 && sessionId) {
+          // Resume timer after a short delay to ensure page is fully loaded
+          setTimeout(() => {
+            if (document.visibilityState === 'visible') {
+              startTimer();
+              resumeTryoutState();
+              console.log('▶️ Timer and tryout state resumed after page became visible');
+            }
+          }, 100);
+        }
+      }
+    };
+
+    // Handle pagehide event to detect if user cancelled close tab
+    const handlePageHide = (event: PageTransitionEvent) => {
+      if (event.persisted && timeLeft > 0 && sessionId) {
+        // Page is persisted (user cancelled close), resume timer and tryout state
+        console.log('🔄 Page persisted - user cancelled close tab, resuming timer and tryout state');
+        setTimeout(() => {
+          if (timeLeft > 0 && sessionId) {
+            startTimer();
+            resumeTryoutState();
+            console.log('▶️ Timer and tryout state resumed after user cancelled close tab');
+          }
+        }, 100);
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    window.addEventListener('pagehide', handlePageHide);
+    
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.removeEventListener('pagehide', handlePageHide);
+    };
+  }, [timeLeft, isPaused, sessionId, forcePauseTimer, startTimer, pauseTryoutState, resumeTryoutState]);
+
+  // Note: Timer recovery now handled by useTryoutStateManager
+  // This ensures data consistency with database
+  // No more localStorage-based timer recovery
+
   useEffect(() => {
     initializeTryout();
-    return () => {
-      if (intervalRef.current) {
-        clearInterval(intervalRef.current);
-      }
-    };
   }, [packageId]);
-
-  useEffect(() => {
-    if (timeLeft > 0) {
-      intervalRef.current = setInterval(() => {
-        setTimeLeft(prev => {
-          if (prev <= 1) {
-            handleTimeUp();
-            return 0;
-          }
-          return prev - 1;
-        });
-      }, 1000);
-    } else if (intervalRef.current) {
-      clearInterval(intervalRef.current);
-    }
-
-    return () => {
-      if (intervalRef.current) {
-        clearInterval(intervalRef.current);
-      }
-    };
-  }, [timeLeft]);
 
   useEffect(() => {
     setQuestionStartTime(Date.now());
   }, [currentQuestionIndex]);
+
+  // Handle navigation and visibility changes (no confirmation needed)
+  useEffect(() => {
+    const handleBeforeUnload = (event: BeforeUnloadEvent) => {
+      if (timeLeft > 0 && sessionId) {
+        // Just pause timer and tryout state, no confirmation
+        forcePauseTimer();
+        pauseTryoutState();
+        console.log('🚪 BeforeUnload - Timer paused (no confirmation)');
+      }
+    };
+
+    const handlePopState = (event: PopStateEvent) => {
+      if (timeLeft > 0 && sessionId) {
+        // Just pause timer and tryout state, no confirmation
+        forcePauseTimer();
+        pauseTryoutState();
+        console.log('🚪 PopState - Timer paused (no confirmation)');
+      }
+    };
+
+    // Simple visibility change handling
+    const handleVisibilityChange = () => {
+      if (document.hidden) {
+        // Page hidden - pause timer and tryout state
+        if (timeLeft > 0 && sessionId && !isPaused) {
+          forcePauseTimer();
+          pauseTryoutState();
+          console.log('⏸️ Timer paused due to page hidden');
+        }
+      } else {
+        // Page visible - resume timer and tryout state if paused
+        if (isPaused && timeLeft > 0 && sessionId) {
+          setTimeout(() => {
+            if (document.visibilityState === 'visible' && timeLeft > 0 && sessionId && isPaused) {
+              startTimer();
+              resumeTryoutState();
+              console.log('▶️ Timer resumed after page became visible');
+            }
+          }, 100);
+        }
+      }
+    };
+
+    // Add event listeners
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    window.addEventListener('popstate', handlePopState);
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    // Push initial state to prevent immediate popstate
+    window.history.pushState(null, '', window.location.pathname);
+
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+      window.removeEventListener('popstate', handlePopState);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, [timeLeft, isPaused, sessionId, forcePauseTimer, startTimer, packageId]);
+
+  // Cleanup timer when component unmounts
+  useEffect(() => {
+    return () => {
+      // Force pause timer when leaving tryout page
+      if (timeLeft > 0 && sessionId) {
+        forcePauseTimer();
+        console.log('🧹 Timer force paused on component unmount');
+      }
+    };
+  }, [timeLeft, sessionId, forcePauseTimer]);
 
   const initializeTryout = async () => {
     try {
@@ -121,8 +275,16 @@ const TryoutPage = () => {
         // Compute remaining time from start_time
         const startedAtMs = existing.start_time ? new Date(existing.start_time).getTime() : Date.now();
         const elapsedSeconds = Math.max(0, Math.floor((Date.now() - startedAtMs) / 1000));
+        
+        // Note: Pause time recovery now handled by useTryoutStateManager
+        // This ensures data consistency with database
         const remaining = pkg.duration_minutes * 60 - elapsedSeconds;
-        setTimeLeft(Math.max(0, remaining));
+        // Update timer with remaining time
+        if (remaining > 0) {
+          setTimerTime(remaining);
+          // Timer will be started automatically by useEffect
+          console.log('⏰ Resuming timer with remaining time:', remaining, 'seconds');
+        }
 
         if (remaining <= 0) {
           // Time already up, finish immediately
@@ -141,7 +303,11 @@ const TryoutPage = () => {
           setSession(newSession);
           console.log('🆕 Created new session:', newSession.id);
           setSessionId(newSession.id); // Set sessionId
-          setTimeLeft(pkg.duration_minutes * 60); // Convert to seconds
+          // Start timer with package duration
+          const durationInSeconds = pkg.duration_minutes * 60;
+          setTimerTime(durationInSeconds);
+          // Timer will be started automatically by useEffect
+          console.log('⏰ Starting new timer with duration:', pkg.duration_minutes, 'minutes (', durationInSeconds, 'seconds)');
         } else {
           throw new Error('Failed to create new session');
         }
@@ -318,13 +484,21 @@ const TryoutPage = () => {
 
   const handleNextQuestion = () => {
     if (currentQuestionIndex < questions.length - 1) {
-      setCurrentQuestionIndex(prev => prev + 1);
+      const newIndex = currentQuestionIndex + 1;
+      setCurrentQuestionIndex(newIndex);
+      
+      // Update tryout state manager
+      updateQuestionState(newIndex, answers);
     }
   };
 
   const handlePreviousQuestion = () => {
     if (currentQuestionIndex > 0) {
-      setCurrentQuestionIndex(prev => prev - 1);
+      const newIndex = currentQuestionIndex - 1;
+      setCurrentQuestionIndex(newIndex);
+      
+      // Update tryout state manager
+      updateQuestionState(newIndex, answers);
     }
   };
 
@@ -449,7 +623,8 @@ const TryoutPage = () => {
       
       // Update session status
       if (sessionId) {
-        await TryoutSession.update(sessionId, {
+        console.log('🔄 Updating session status to completed...');
+        const updateResult = await TryoutSession.update(sessionId, {
           status: 'completed',
           end_time: new Date().toISOString(),
           total_score: totalScore,
@@ -457,6 +632,7 @@ const TryoutPage = () => {
           wrong_answers: wrongAnswers,
           unanswered: unanswered
         });
+        console.log('✅ Session status updated:', updateResult);
       }
       
       // Hitung pass/fail berdasarkan threshold
@@ -626,27 +802,25 @@ const TryoutPage = () => {
   };
 
   const handleTimeUp = async () => {
+    console.log('⏰ Timer habis! Memanggil handleTimeUp...');
+    
     toast({
       title: "Waktu habis",
       description: "Tryout akan diselesaikan otomatis",
       variant: "destructive",
     });
     
-    setTimeout(() => {
-      handleFinishTryout();
+    // Pause timer state untuk mencegah perubahan lebih lanjut
+    pauseTryoutState();
+    
+    // Tunggu sebentar lalu selesaikan tryout
+    setTimeout(async () => {
+      console.log('🚀 Menjalankan handleFinishTryout karena waktu habis...');
+      await handleFinishTryout();
     }, 2000);
   };
 
-  const formatTime = (seconds) => {
-    const hours = Math.floor(seconds / 3600);
-    const minutes = Math.floor((seconds % 3600) / 60);
-    const remainingSeconds = seconds % 60;
-    
-    if (hours > 0) {
-      return `${hours}:${minutes.toString().padStart(2, '0')}:${remainingSeconds.toString().padStart(2, '0')}`;
-    }
-    return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
-  };
+  // formatTime function is now provided by useTimer hook
 
   // Fungsi untuk menghitung progress berdasarkan userAnswers local
   const getAnsweredCount = () => {
@@ -669,10 +843,13 @@ const TryoutPage = () => {
       newUserAnswers[currentQuestionIndex] = answer;
       setUserAnswers(newUserAnswers);
       
+      // Update tryout state manager with new answer
+      const newAnswers = { ...answers };
+      newAnswers[questions[currentQuestionIndex]?.id] = answer;
+      updateQuestionState(currentQuestionIndex, newAnswers);
+      
       // Simpan jawaban ke database
       await saveAnswerToDatabase(answer, currentQuestionIndex);
-      
-
       
       console.log('Answer saved successfully:', answer);
       
@@ -751,11 +928,60 @@ const TryoutPage = () => {
             </div>
             
             <div className="flex items-center space-x-4">
+              {/* Connection Status */}
+              <div className="flex items-center space-x-2">
+                <div className={`w-2 h-2 rounded-full ${isOnline ? 'bg-green-500' : 'bg-red-500'}`}></div>
+                <span className="text-xs text-gray-600">
+                  {isOnline ? 'Online' : 'Offline'}
+                </span>
+              </div>
+              
+              {/* Recovery Status */}
+              {isRecovering && (
+                <Badge variant="outline" className="bg-green-100 text-green-700 border-green-300">
+                  🔄 Recovered
+                </Badge>
+              )}
+              
               <div className="flex items-center text-orange-600">
                 <Clock className="w-5 h-5 mr-2" />
                 <span className="font-mono font-bold text-lg">
                   {formatTime(timeLeft)}
                 </span>
+                {isPaused && (
+                  <Badge variant="outline" className="ml-2 bg-orange-100 text-orange-700 border-orange-300">
+                    ⏸️ PAUSED
+                  </Badge>
+                )}
+              </div>
+              
+              {/* Recovery Controls */}
+              <div className="flex items-center space-x-2">
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  onClick={forceSync}
+                  disabled={!isOnline}
+                  title="Force sync to server"
+                >
+                  🔄 Sync
+                </Button>
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  onClick={() => {
+                    const info = getRecoveryInfo();
+                    console.log('Recovery Info:', info);
+                    toast({
+                      title: "📊 Recovery Info",
+                      description: `Last sync: ${info.lastSync}, Total paused: ${info.totalPausedTime}s, Online: ${info.isOnline ? 'Yes' : 'No'}`,
+                      variant: "default",
+                    });
+                  }}
+                  title="Show recovery information"
+                >
+                  ℹ️ Info
+                </Button>
               </div>
               
               <Button 
@@ -786,7 +1012,20 @@ const TryoutPage = () => {
         } hidden lg:block`}>
           <div className="p-4">
             <div className="flex items-center gap-3 mb-4">
-              <Button variant="ghost" size="icon" onClick={() => navigate('/dashboard')} title="Kembali">
+              <Button variant="ghost" size="icon" onClick={() => {
+                if (timeLeft > 0 && sessionId) {
+                  // Force pause timer and tryout state before navigation
+                  forcePauseTimer();
+                  pauseTryoutState();
+                  
+                  // No confirmation needed, just pause timer
+                  console.log('🚪 Sidebar navigation - Timer paused (no confirmation)');
+                  // Navigate directly
+                  navigate('/dashboard');
+                } else {
+                  navigate('/dashboard');
+                }
+              }} title="Kembali">
                 <ArrowLeft className="w-4 h-4" />
               </Button>
               <div>
@@ -804,31 +1043,33 @@ const TryoutPage = () => {
           <Card className="sticky top-6">
             <CardHeader className="pb-2">
               <CardTitle className="text-sm">Daftar Soal</CardTitle>
-              <div className="text-xs text-gray-500">Nomor Soal</div>
+              <div className="text-xs text-gray-500">Nomor Soal (Scrollable)</div>
             </CardHeader>
             <CardContent>
-              <div className="grid grid-cols-5 gap-2">
-                {questions.map((question, index) => {
-                  const isAnswered = userAnswers[index] !== null && userAnswers[index] !== undefined;
-                  const isCurrent = index === currentQuestionIndex;
-                  
-                  return (
-                    <Button
-                      key={index}
-                      size="sm"
-                      variant={isCurrent ? "default" : "outline"}
-                      className={`w-10 h-10 p-0 rounded-md ${
-                        isCurrent ? 'ring-2 ring-offset-1 ring-blue-600' : ''
-                      } ${
-                        isAnswered && !isCurrent ? 'border-blue-500 bg-blue-50 text-blue-700 hover:bg-blue-100' : ''
-                      }`}
-                      onClick={() => setCurrentQuestionIndex(index)}
-                      title={`${question.main_category || 'Non Tag'} - ${question.sub_category || 'Umum'}`}
-                    >
-                      {index + 1}
-                    </Button>
-                  );
-                })}
+              <div className="max-h-80 overflow-y-auto pr-2" style={{ scrollbarWidth: 'thin', scrollbarColor: '#CBD5E0 #F7FAFC' }}>
+                <div className="grid grid-cols-5 gap-2">
+                  {questions.map((question, index) => {
+                    const isAnswered = userAnswers[index] !== null && userAnswers[index] !== undefined;
+                    const isCurrent = index === currentQuestionIndex;
+                    
+                    return (
+                      <Button
+                        key={index}
+                        size="sm"
+                        variant={isCurrent ? "default" : "outline"}
+                        className={`w-10 h-10 p-0 rounded-md ${
+                          isCurrent ? 'ring-2 ring-offset-1 ring-blue-600' : ''
+                        } ${
+                          isAnswered && !isCurrent ? 'border-blue-500 bg-blue-50 text-blue-700 hover:bg-blue-100' : ''
+                        }`}
+                        onClick={() => setCurrentQuestionIndex(index)}
+                        title={`${question.main_category || 'Non Tag'} - ${question.sub_category || 'Umum'}`}
+                      >
+                        {index + 1}
+                      </Button>
+                    );
+                  })}
+                </div>
               </div>
             </CardContent>
           </Card>

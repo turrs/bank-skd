@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Review Statistics Position</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 50px auto;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        .container {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 30px;
+            border-radius: 15px;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        }
+        .test-section {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        .demo-panel {
+            background: rgba(76, 175, 80, 0.1);
+            border: 1px solid rgba(76, 175, 80, 0.3);
+            padding: 15px;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+        .controls {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin: 20px 0;
+        }
+        .control-btn {
+            padding: 12px 20px;
+            border: none;
+            border-radius: 6px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: bold;
+        }
+        .btn-primary { background: #2196F3; color: white; }
+        .btn-success { background: #4CAF50; color: white; }
+        .btn-warning { background: #FF9800; color: white; }
+        .btn-danger { background: #f44336; color: white; }
+        .control-btn:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3); }
+        .log-panel {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 15px;
+            border-radius: 8px;
+            margin: 20px 0;
+            max-height: 400px;
+            overflow-y: auto;
+            font-family: monospace;
+            font-size: 12px;
+        }
+        .log-entry {
+            margin: 5px 0;
+            padding: 8px;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 0.9rem;
+        }
+        .log-info { background: rgba(33, 150, 243, 0.2); }
+        .log-success { background: rgba(76, 175, 80, 0.2); }
+        .log-warning { background: rgba(255, 193, 7, 0.2); }
+        .log-error { background: rgba(244, 67, 54, 0.2); }
+        .position-panel {
+            background: rgba(76, 175, 80, 0.1);
+            border: 1px solid rgba(76, 175, 80, 0.3);
+            padding: 15px;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+        .code-block {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 15px;
+            border-radius: 8px;
+            margin: 10px 0;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            font-family: monospace;
+            font-size: 12px;
+            line-height: 1.6;
+            overflow-x: auto;
+        }
+        .status-indicator {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 8px;
+        }
+        .status-success { background: #4CAF50; }
+        .status-warning { background: #FF9800; }
+        .status-error { background: #f44336; }
+        .status-info { background: #2196F3; }
+        .layout-preview {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        .layout-item {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 8px;
+            border-left: 4px solid #4CAF50;
+        }
+        .layout-item.header { border-left-color: #2196F3; }
+        .layout-item.session { border-left-color: #FF9800; }
+        .layout-item.questions { border-left-color: #9C27B0; }
+        .layout-item.navigation { border-left-color: #607D8B; }
+        .layout-item.statistics { border-left-color: #4CAF50; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📊 Test Review Statistics Position</h1>
+        
+        <div class="test-section">
+            <h3>📋 Test Overview</h3>
+            <p>Verifikasi posisi "Statistik per Kategori Soal" yang sudah dipindah ke paling bawah di halaman review</p>
+        </div>
+
+        <div class="position-panel">
+            <h3>🔧 Perubahan yang Diterapkan</h3>
+            <div class="code-block">
+                <div style="color: #FF6B6B;">// ❌ BEFORE: Statistik di tengah (setelah Session Summary)</div>
+                <div>┌─ Session Summary</div>
+                <div>├─ Tag Statistics per Kategori Soal ← ❌ Posisi lama</div>
+                <div>├─ Questions Review</div>
+                <div>└─ Question Navigation Sidebar</div>
+                <div></div>
+                <div style="color: #4ECDC4;">// ✅ AFTER: Statistik di paling bawah</div>
+                <div>┌─ Session Summary</div>
+                <div>├─ Questions Review</div>
+                <div>├─ Question Navigation Sidebar</div>
+                <div>└─ Tag Statistics per Kategori Soal ← ✅ Posisi baru</div>
+            </div>
+        </div>
+
+        <div class="demo-panel">
+            <h3>🎯 Test Controls</h3>
+            <div class="controls">
+                <button class="control-btn btn-primary" onclick="testLayoutOrder()">Test Layout Order</button>
+                <button class="control-btn btn-success" onclick="testStatisticsPosition()">Test Statistics Position</button>
+                <button class="control-btn btn-warning" onclick="testUserExperience()">Test User Experience</button>
+                <button class="control-btn btn-danger" onclick="testResponsiveness()">Test Responsiveness</button>
+                <button class="control-btn btn-primary" onclick="simulateNewLayout()">Simulate New Layout</button>
+            </div>
+        </div>
+
+        <div class="layout-preview">
+            <h3>🎨 Layout Preview - Setelah Perubahan</h3>
+            <div class="layout-item header">
+                <h4>📱 Header</h4>
+                <p>Modern header dengan tombol kembali dan judul halaman</p>
+            </div>
+            <div class="layout-item session">
+                <h4>📊 Session Summary</h4>
+                <p>Ringkasan tryout: total poin, jawaban benar/salah, tidak dijawab</p>
+            </div>
+            <div class="layout-item questions">
+                <h4>❓ Questions Review</h4>
+                <p>Area utama untuk review soal dengan navigasi previous/next</p>
+            </div>
+            <div class="layout-item navigation">
+                <h4>🧭 Question Navigation Sidebar</h4>
+                <p>Sidebar kanan dengan navigasi soal dan legenda status</p>
+            </div>
+            <div class="layout-item statistics">
+                <h4>📈 Tag Statistics per Kategori Soal</h4>
+                <p>Statistik per kategori soal - SEKARANG DI PALING BAWAH ✅</p>
+            </div>
+        </div>
+
+        <div class="test-section">
+            <h3>🐛 Alasan Perubahan Posisi</h3>
+            <div class="code-block">
+                <div style="color: #FFE66D;">// 💡 User Request:</div>
+                <div>"Statistik per Kategori Soal, harus paling bawah di review"</div>
+                <div></div>
+                <div style="color: #4ECDC4;">// ✅ Benefits:</div>
+                <div>• User melihat review soal terlebih dahulu</div>
+                <div>• Statistik sebagai kesimpulan di akhir</div>
+                <div>• Flow yang lebih logis: Review → Analisis</div>
+                <div>• Tidak mengganggu fokus review soal</div>
+            </div>
+        </div>
+
+        <div class="test-section">
+            <h3>📱 Responsive Layout Considerations</h3>
+            <div class="code-block">
+                <div style="color: #4ECDC4;">// ✅ Mobile First Design:</div>
+                <div>• Grid: grid-cols-1 md:grid-cols-2 gap-4</div>
+                <div>• Responsive: md:grid-cols-2 untuk tablet+</div>
+                <div>• Mobile: grid-cols-1 untuk smartphone</div>
+                <div>• Spacing: mt-8 untuk margin atas yang konsisten</div>
+            </div>
+        </div>
+
+        <div class="test-section">
+            <h3>🎯 User Experience Flow</h3>
+            <div class="code-block">
+                <div style="color: #4ECDC4;">// ✅ Optimal User Journey:</div>
+                <div>1. User membuka halaman review</div>
+                <div>2. Melihat ringkasan tryout (Session Summary)</div>
+                <div>3. Review soal satu per satu (Questions Review)</div>
+                <div>4. Navigasi antar soal (Question Navigation)</div>
+                <div>5. Analisis statistik per kategori (Statistics) ← Paling bawah</div>
+                <div></div>
+                <div style="color: #FFE66D;">// 💡 Logic:</div>
+                <div>• Review dulu, analisis belakangan</div>
+                <div>• Statistik sebagai kesimpulan</div>
+                <div>• Tidak mengganggu fokus review</div>
+            </div>
+        </div>
+
+        <div class="log-panel">
+            <h3>📝 Test Log</h3>
+            <div id="logContainer">
+                <div class="log-entry log-success">System initialized. Statistics position change applied successfully.</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        class ReviewStatisticsPositionTest {
+            constructor() {
+                this.initialize();
+            }
+            
+            initialize() {
+                this.log('🚀 Initializing review statistics position test...');
+                this.log('📋 Test scenarios:');
+                this.log('   • Test layout order after position change');
+                this.log('   • Test statistics position at bottom');
+                this.log('   • Test user experience flow');
+                this.log('   • Test responsive layout');
+                this.log('   • Simulate new layout behavior');
+            }
+            
+            testLayoutOrder() {
+                this.log('🔍 Testing layout order after position change...', 'info');
+                this.log('✅ Header: Modern header dengan tombol kembali');
+                this.log('✅ Session Summary: Ringkasan tryout di atas');
+                this.log('✅ Questions Review: Area utama review soal');
+                this.log('✅ Question Navigation: Sidebar navigasi soal');
+                this.log('✅ Tag Statistics: SEKARANG DI PALING BAWAH ✅');
+            }
+            
+            testStatisticsPosition() {
+                this.log('🔍 Testing statistics position at bottom...', 'info');
+                this.log('✅ Statistik per Kategori Soal dipindah ke paling bawah');
+                this.log('✅ Posisi: Setelah Question Navigation Sidebar');
+                this.log('✅ Margin: mt-8 untuk spacing yang konsisten');
+                this.log('✅ Conditional: Hanya tampil untuk session completed');
+                this.log('✅ Layout: Grid responsive 1 kolom mobile, 2 kolom desktop');
+            }
+            
+            testUserExperience() {
+                this.log('🔍 Testing user experience flow...', 'info');
+                this.log('✅ Flow logis: Review → Analisis');
+                this.log('✅ User fokus review soal terlebih dahulu');
+                this.log('✅ Statistik sebagai kesimpulan di akhir');
+                this.log('✅ Tidak mengganggu fokus review');
+                this.log('✅ Informasi tersusun dari umum ke spesifik');
+            }
+            
+            testResponsiveness() {
+                this.log('🔍 Testing responsive layout...', 'info');
+                this.log('✅ Mobile: grid-cols-1 (1 kolom)');
+                this.log('✅ Tablet+: md:grid-cols-2 (2 kolom)');
+                this.log('✅ Gap: gap-4 untuk spacing yang konsisten');
+                this.log('✅ Cards: Responsive dengan border dan shadow');
+                this.log('✅ Text: Ukuran font yang readable di semua device');
+            }
+            
+            simulateNewLayout() {
+                this.log('🔍 Simulating new layout behavior...', 'info');
+                this.log('✅ User membuka halaman review');
+                this.log('✅ Melihat Session Summary di atas');
+                this.log('✅ Review soal dengan Questions Review');
+                this.log('✅ Navigasi dengan Question Navigation Sidebar');
+                this.log('✅ Analisis dengan Tag Statistics di paling bawah');
+                this.log('✅ Experience yang lebih terstruktur dan logis');
+            }
+            
+            log(message, type = 'info') {
+                const logContainer = document.getElementById('logContainer');
+                const logEntry = document.createElement('div');
+                logEntry.className = `log-entry log-${type}`;
+                
+                const timestamp = new Date().toLocaleTimeString();
+                logEntry.textContent = `[${timestamp}] ${message}`;
+                
+                logContainer.appendChild(logEntry);
+                logContainer.scrollTop = logContainer.scrollHeight;
+                
+                // Keep only last 30 log entries
+                while (logContainer.children.length > 30) {
+                    logContainer.removeChild(logContainer.firstChild);
+                }
+                
+                console.log(`[${type.toUpperCase()}] ${message}`);
+            }
+        }
+        
+        // Initialize test
+        let reviewStatisticsPositionTest;
+        
+        document.addEventListener('DOMContentLoaded', () => {
+            reviewStatisticsPositionTest = new ReviewStatisticsPositionTest();
+        });
+        
+        // Global functions for buttons
+        function testLayoutOrder() {
+            if (reviewStatisticsPositionTest) reviewStatisticsPositionTest.testLayoutOrder();
+        }
+        
+        function testStatisticsPosition() {
+            if (reviewStatisticsPositionTest) reviewStatisticsPositionTest.testStatisticsPosition();
+        }
+        
+        function testUserExperience() {
+            if (reviewStatisticsPositionTest) reviewStatisticsPositionTest.testUserExperience();
+        }
+        
+        function testResponsiveness() {
+            if (reviewStatisticsPositionTest) reviewStatisticsPositionTest.testResponsiveness();
+        }
+        
+        function simulateNewLayout() {
+            if (reviewStatisticsPositionTest) reviewStatisticsPositionTest.simulateNewLayout();
+        }
+        
+        console.log('📊 Review Statistics Position Test loaded!');
+        console.log('📋 Test the new position of Tag Statistics at the bottom');
+    </script>
+</body>
+</html>

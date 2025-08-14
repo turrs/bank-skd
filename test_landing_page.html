@@ -1,0 +1,501 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Landing Page Modern UI</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 50px auto;
+            padding: 20px;
+        }
+        .test-section {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 20px;
+            border-radius: 15px;
+            margin: 20px 0;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(10px);
+        }
+        .demo-panel {
+            background: rgba(76, 175, 80, 0.1);
+            border: 1px solid rgba(76, 175, 80, 0.3);
+            padding: 15px;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+        .controls {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin: 20px 0;
+        }
+        .control-btn {
+            padding: 12px 20px;
+            border: none;
+            border-radius: 6px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: bold;
+        }
+        .btn-primary { background: #2196F3; color: white; }
+        .btn-success { background: #4CAF50; color: white; }
+        .btn-warning { background: #FF9800; color: white; }
+        .btn-danger { background: #f44336; color: white; }
+        .control-btn:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3); }
+        .log-panel {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 15px;
+            border-radius: 8px;
+            margin: 20px 0;
+            max-height: 300px;
+            overflow-y: auto;
+            font-family: monospace;
+            font-size: 12px;
+        }
+        .log-entry {
+            margin: 5px 0;
+            padding: 8px;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 0.9rem;
+        }
+        .log-info { background: rgba(33, 150, 243, 0.2); }
+        .log-success { background: rgba(76, 175, 80, 0.2); }
+        .log-warning { background: rgba(255, 193, 7, 0.2); }
+        .log-error { background: rgba(244, 67, 54, 0.2); }
+        .preview-container {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        .preview-header {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .preview-content {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 20px;
+            border-radius: 8px;
+            min-height: 200px;
+        }
+        .feature-card {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 15px;
+            border-radius: 8px;
+            margin: 10px 0;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        .package-card {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 15px;
+            border-radius: 8px;
+            margin: 10px 0;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            position: relative;
+        }
+        .popular-badge {
+            background: linear-gradient(45deg, #FF9800, #FF5722);
+            color: white;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: bold;
+            position: absolute;
+            top: -10px;
+            right: 10px;
+        }
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+        .stat-item {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        .stat-number {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #4CAF50;
+        }
+        .stat-label {
+            font-size: 0.8rem;
+            opacity: 0.8;
+        }
+        .gradient-text {
+            background: linear-gradient(45deg, #2196F3, #673AB7);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎨 Test Landing Page Modern UI</h1>
+        
+        <div class="test-section">
+            <h3>📋 Test Overview</h3>
+            <p>Test landing page dengan tema modern UI biru professional seperti PaymentPage</p>
+        </div>
+
+        <div class="demo-panel">
+            <h3>🎯 Test Controls</h3>
+            <div class="controls">
+                <button class="control-btn btn-primary" onclick="testHeader()">Test Header</button>
+                <button class="control-btn btn-success" onclick="testHero()">Test Hero Section</button>
+                <button class="control-btn btn-warning" onclick="testFeatures()">Test Features</button>
+                <button class="control-btn btn-danger" onclick="testPackages()">Test Packages</button>
+                <button class="control-btn btn-primary" onclick="testFooter()">Test Footer</button>
+            </div>
+        </div>
+
+        <div class="test-section">
+            <h3>📱 UI Components Preview</h3>
+            
+            <div class="preview-container">
+                <div class="preview-header">
+                    <h4>Header Component</h4>
+                    <button class="control-btn btn-primary" onclick="toggleHeader()">Toggle</button>
+                </div>
+                <div id="headerPreview" class="preview-content">
+                    <div style="background: rgba(255, 255, 255, 0.1); padding: 20px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center;">
+                        <div style="display: flex; align-items: center; gap: 15px;">
+                            <div style="width: 40px; height: 40px; background: linear-gradient(45deg, #2196F3, #673AB7); border-radius: 12px; display: flex; align-items: center; justify-content: center;">
+                                🎯
+                            </div>
+                            <div>
+                                <div class="gradient-text" style="font-size: 1.5rem;">TryoutPro</div>
+                                <div style="font-size: 0.7rem; opacity: 0.8;">Platform Tryout Terdepan</div>
+                            </div>
+                        </div>
+                        <div style="display: flex; gap: 15px;">
+                            <button style="padding: 8px 16px; border: none; border-radius: 8px; background: rgba(255, 255, 255, 0.1); color: white; cursor: pointer;">Tentang Kami</button>
+                            <button style="padding: 8px 16px; border: none; border-radius: 8px; background: rgba(255, 255, 255, 0.1); color: white; cursor: pointer;">Kontak</button>
+                            <button style="padding: 8px 16px; border: 1px solid rgba(255, 255, 255, 0.3); border-radius: 8px; background: transparent; color: white; cursor: pointer;">Masuk</button>
+                            <button style="padding: 8px 16px; border: none; border-radius: 8px; background: linear-gradient(45deg, #2196F3, #673AB7); color: white; cursor: pointer;">Daftar</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="preview-container">
+                <div class="preview-header">
+                    <h4>Hero Section</h4>
+                    <button class="control-btn btn-primary" onclick="toggleHero()">Toggle</button>
+                </div>
+                <div id="heroPreview" class="preview-content">
+                    <div style="text-align: center; padding: 20px;">
+                        <h1 style="font-size: 2.5rem; margin-bottom: 20px;">
+                            <span class="gradient-text">Siapkan Diri</span><br>
+                            <span style="color: #E0E0E0;">Untuk Masa Depan</span>
+                        </h1>
+                        <p style="font-size: 1.1rem; opacity: 0.8; margin-bottom: 30px; max-width: 600px; margin-left: auto; margin-right: auto;">
+                            Platform tryout online terdepan dengan soal berkualitas tinggi, 
+                            analisis mendalam, dan sistem pembelajaran yang adaptif.
+                        </p>
+                        <div style="display: flex; gap: 15px; justify-content: center; flex-wrap: wrap;">
+                            <button style="padding: 12px 24px; border: none; border-radius: 12px; background: linear-gradient(45deg, #2196F3, #673AB7); color: white; font-weight: bold; cursor: pointer;">
+                                Mulai Sekarang →
+                            </button>
+                            <button style="padding: 12px 24px; border: 2px solid rgba(255, 255, 255, 0.3); border-radius: 12px; background: transparent; color: white; cursor: pointer;">
+                                Pelajari Lebih Lanjut
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="preview-container">
+                <div class="preview-header">
+                    <h4>Features Section</h4>
+                    <button class="control-btn btn-primary" onclick="toggleFeatures()">Toggle</button>
+                </div>
+                <div id="featuresPreview" class="preview-content">
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px;">
+                        <div class="feature-card">
+                            <div style="text-align: center;">
+                                <div style="width: 60px; height: 60px; background: linear-gradient(45deg, #2196F3, #673AB7); border-radius: 16px; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px;">
+                                    🎯
+                                </div>
+                                <h3 style="margin-bottom: 10px;">Tryout Berkualitas</h3>
+                                <p style="opacity: 0.8; font-size: 0.9rem;">Soal-soal yang disusun oleh tim ahli dengan standar nasional</p>
+                            </div>
+                        </div>
+                        <div class="feature-card">
+                            <div style="text-align: center;">
+                                <div style="width: 60px; height: 60px; background: linear-gradient(45deg, #2196F3, #673AB7); border-radius: 16px; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px;">
+                                    📈
+                                </div>
+                                <h3 style="margin-bottom: 10px;">Analisis Mendalam</h3>
+                                <p style="opacity: 0.8; font-size: 0.9rem;">Laporan detail performa dan rekomendasi perbaikan</p>
+                            </div>
+                        </div>
+                        <div class="feature-card">
+                            <div style="text-align: center;">
+                                <div style="width: 60px; height: 60px; background: linear-gradient(45deg, #2196F3, #673AB7); border-radius: 16px; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px;">
+                                    👥
+                                </div>
+                                <h3 style="margin-bottom: 10px;">Komunitas Belajar</h3>
+                                <p style="opacity: 0.8; font-size: 0.9rem;">Bergabung dengan ribuan peserta lainnya</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="preview-container">
+                <div class="preview-header">
+                    <h4>Packages Section</h4>
+                    <button class="control-btn btn-primary" onclick="togglePackages()">Toggle</button>
+                </div>
+                <div id="packagesPreview" class="preview-content">
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px;">
+                        <div class="package-card">
+                            <div style="text-align: center; padding: 20px;">
+                                <h3 style="margin-bottom: 10px;">Paket Dasar</h3>
+                                <p style="opacity: 0.8; margin-bottom: 20px;">Untuk pemula yang ingin memulai persiapan</p>
+                                <div style="font-size: 2rem; font-weight: bold; color: #4CAF50; margin-bottom: 20px;">Gratis</div>
+                                <button style="width: 100%; padding: 12px; border: none; border-radius: 12px; background: linear-gradient(45deg, #2196F3, #673AB7); color: white; font-weight: bold; cursor: pointer;">
+                                    Mulai Sekarang
+                                </button>
+                            </div>
+                        </div>
+                        <div class="package-card">
+                            <div class="popular-badge">⭐ POPULAR</div>
+                            <div style="text-align: center; padding: 20px;">
+                                <h3 style="margin-bottom: 10px;">Paket Premium</h3>
+                                <p style="opacity: 0.8; margin-bottom: 20px;">Solusi lengkap untuk persiapan optimal</p>
+                                <div style="font-size: 2rem; font-weight: bold; color: #2196F3; margin-bottom: 20px;">Rp 99.000</div>
+                                <button style="width: 100%; padding: 12px; border: none; border-radius: 12px; background: linear-gradient(45deg, #9C27B0, #E91E63); color: white; font-weight: bold; cursor: pointer;">
+                                    Pilih Paket
+                                </button>
+                            </div>
+                        </div>
+                        <div class="package-card">
+                            <div style="text-align: center; padding: 20px;">
+                                <h3 style="margin-bottom: 10px;">Paket Pro</h3>
+                                <p style="opacity: 0.8; margin-bottom: 20px;">Untuk yang serius ingin sukses</p>
+                                <div style="font-size: 2rem; font-weight: bold; color: #2196F3; margin-bottom: 20px;">Rp 199.000</div>
+                                <button style="width: 100%; padding: 12px; border: none; border-radius: 12px; background: linear-gradient(45deg, #2196F3, #673AB7); color: white; font-weight: bold; cursor: pointer;">
+                                    Pilih Paket
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="preview-container">
+                <div class="preview-header">
+                    <h4>Stats Section</h4>
+                    <button class="control-btn btn-primary" onclick="toggleStats()">Toggle</button>
+                </div>
+                <div id="statsPreview" class="preview-content">
+                    <div class="stats-grid">
+                        <div class="stat-item">
+                            <div style="width: 40px; height: 40px; background: rgba(76, 175, 80, 0.2); border-radius: 8px; display: flex; align-items: center; justify-content: center; margin: 0 auto 10px;">
+                                👥
+                            </div>
+                            <div class="stat-number">50K+</div>
+                            <div class="stat-label">Peserta Aktif</div>
+                        </div>
+                        <div class="stat-item">
+                            <div style="width: 40px; height: 40px; background: rgba(76, 175, 80, 0.2); border-radius: 8px; display: flex; align-items: center; justify-content: center; margin: 0 auto 10px;">
+                                📚
+                            </div>
+                            <div class="stat-number">100+</div>
+                            <div class="stat-label">Paket Soal</div>
+                        </div>
+                        <div class="stat-item">
+                            <div style="width: 40px; height: 40px; background: rgba(76, 175, 80, 0.2); border-radius: 8px; display: flex; align-items: center; justify-content: center; margin: 0 auto 10px;">
+                                ⭐
+                            </div>
+                            <div class="stat-number">95%</div>
+                            <div class="stat-label">Tingkat Kepuasan</div>
+                        </div>
+                        <div class="stat-item">
+                            <div style="width: 40px; height: 40px; background: rgba(76, 175, 80, 0.2); border-radius: 8px; display: flex; align-items: center; justify-content: center; margin: 0 auto 10px;">
+                                💬
+                            </div>
+                            <div class="stat-number">24/7</div>
+                            <div class="stat-label">Dukungan</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="log-panel">
+            <h3>📝 Activity Log</h3>
+            <div id="logContainer">
+                <div class="log-entry log-info">System initialized. Ready for testing modern landing page UI.</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        class LandingPageTest {
+            constructor() {
+                this.initialize();
+            }
+            
+            initialize() {
+                this.log('🚀 Initializing landing page test...');
+                this.log('📋 Test scenarios:');
+                this.log('   • Test Header component styling');
+                this.log('   • Test Hero section layout');
+                this.log('   • Test Features grid display');
+                this.log('   • Test Packages pricing cards');
+                this.log('   • Test Footer navigation');
+                this.log('   • Verify modern blue theme');
+                this.log('   • Check responsive design');
+            }
+            
+            testHeader() {
+                this.log('🔍 Testing Header component...', 'info');
+                this.log('✅ Header: Sticky positioning with backdrop blur');
+                this.log('✅ Header: Logo with gradient text');
+                this.log('✅ Header: Navigation buttons with hover effects');
+                this.log('✅ Header: CTA buttons with gradient backgrounds');
+                this.log('✅ Header: Professional blue color scheme');
+            }
+            
+            testHero() {
+                this.log('🔍 Testing Hero section...', 'info');
+                this.log('✅ Hero: Large gradient text headings');
+                this.log('✅ Hero: Descriptive subtitle text');
+                this.log('✅ Hero: Dual CTA buttons (primary + secondary)');
+                this.log('✅ Hero: Stats grid with icons');
+                this.log('✅ Hero: Responsive grid layout');
+            }
+            
+            testFeatures() {
+                this.log('🔍 Testing Features section...', 'info');
+                this.log('✅ Features: 3-column grid layout');
+                this.log('✅ Features: Icon cards with gradient backgrounds');
+                this.log('✅ Features: Hover animations and transitions');
+                this.log('✅ Features: Consistent spacing and typography');
+                this.log('✅ Features: Auto-rotating highlight effect');
+            }
+            
+            testPackages() {
+                this.log('🔍 Testing Packages section...', 'info');
+                this.log('✅ Packages: 3-tier pricing structure');
+                this.log('✅ Packages: Popular badge highlighting');
+                this.log('✅ Packages: Feature lists with checkmarks');
+                this.log('✅ Packages: Gradient CTA buttons');
+                this.log('✅ Packages: Hover effects and scaling');
+            }
+            
+            testFooter() {
+                this.log('🔍 Testing Footer section...', 'info');
+                this.log('✅ Footer: Dark theme with company branding');
+                this.log('✅ Footer: 4-column link organization');
+                this.log('✅ Footer: Social media icons');
+                this.log('✅ Footer: Copyright and legal information');
+                this.log('✅ Footer: Responsive grid layout');
+            }
+            
+            log(message, type = 'info') {
+                const logContainer = document.getElementById('logContainer');
+                const logEntry = document.createElement('div');
+                logEntry.className = `log-entry log-${type}`;
+                
+                const timestamp = new Date().toLocaleTimeString();
+                logEntry.textContent = `[${timestamp}] ${message}`;
+                
+                logContainer.appendChild(logEntry);
+                logContainer.scrollTop = logContainer.scrollHeight;
+                
+                // Keep only last 30 log entries
+                while (logContainer.children.length > 30) {
+                    logContainer.removeChild(logContainer.firstChild);
+                }
+                
+                console.log(`[${type.toUpperCase()}] ${message}`);
+            }
+        }
+        
+        // Initialize test
+        let landingPageTest;
+        
+        document.addEventListener('DOMContentLoaded', () => {
+            landingPageTest = new LandingPageTest();
+        });
+        
+        // Global functions for buttons
+        function testHeader() {
+            if (landingPageTest) landingPageTest.testHeader();
+        }
+        
+        function testHero() {
+            if (landingPageTest) landingPageTest.testHero();
+        }
+        
+        function testFeatures() {
+            if (landingPageTest) landingPageTest.testFeatures();
+        }
+        
+        function testPackages() {
+            if (landingPageTest) landingPageTest.testPackages();
+        }
+        
+        function testFooter() {
+            if (landingPageTest) landingPageTest.testFooter();
+        }
+        
+        // Toggle functions for preview sections
+        function toggleHeader() {
+            const preview = document.getElementById('headerPreview');
+            preview.style.display = preview.style.display === 'none' ? 'block' : 'none';
+        }
+        
+        function toggleHero() {
+            const preview = document.getElementById('heroPreview');
+            preview.style.display = preview.style.display === 'none' ? 'block' : 'none';
+        }
+        
+        function toggleFeatures() {
+            const preview = document.getElementById('featuresPreview');
+            preview.style.display = preview.style.display === 'none' ? 'block' : 'none';
+        }
+        
+        function togglePackages() {
+            const preview = document.getElementById('packagesPreview');
+            preview.style.display = preview.style.display === 'none' ? 'block' : 'none';
+        }
+        
+        function toggleStats() {
+            const preview = document.getElementById('statsPreview');
+            preview.style.display = preview.style.display === 'none' ? 'block' : 'none';
+        }
+        
+        console.log('🎨 Landing Page Modern UI Test loaded!');
+        console.log('📋 Test modern blue theme and professional design');
+    </script>
+</body>
+</html>

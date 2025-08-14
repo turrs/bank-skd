@@ -1,0 +1,529 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test History Pagination & Scrollable</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 50px auto;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        .container {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 30px;
+            border-radius: 15px;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        }
+        .test-section {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        .demo-panel {
+            background: rgba(76, 175, 80, 0.1);
+            border: 1px solid rgba(76, 175, 80, 0.3);
+            padding: 15px;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+        .controls {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin: 20px 0;
+        }
+        .control-btn {
+            padding: 12px 20px;
+            border: none;
+            border-radius: 6px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: bold;
+        }
+        .btn-primary { background: #2196F3; color: white; }
+        .btn-success { background: #4CAF50; color: white; }
+        .btn-warning { background: #FF9800; color: white; }
+        .btn-danger { background: #f44336; color: white; }
+        .control-btn:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3); }
+        .control-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+        .log-panel {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 15px;
+            border-radius: 8px;
+            margin: 20px 0;
+            max-height: 300px;
+            overflow-y: auto;
+            font-family: monospace;
+            font-size: 12px;
+        }
+        .log-entry {
+            margin: 5px 0;
+            padding: 8px;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 0.9rem;
+        }
+        .log-info { background: rgba(33, 150, 243, 0.2); }
+        .log-success { background: rgba(76, 175, 80, 0.2); }
+        .log-warning { background: rgba(255, 193, 7, 0.2); }
+        .log-error { background: rgba(244, 67, 54, 0.2); }
+        .session-list {
+            background: rgba(156, 39, 176, 0.1);
+            border: 1px solid rgba(156, 39, 176, 0.3);
+            padding: 15px;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+        .session-item {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        .session-item:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+        }
+        .session-item.selected {
+            background: rgba(33, 150, 243, 0.3);
+            border-color: #2196F3;
+        }
+        .pagination-controls {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 15px;
+            border-radius: 8px;
+            margin: 20px 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        .page-btn {
+            padding: 8px 12px;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .page-btn:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+        .page-btn.active {
+            background: #2196F3;
+            border-color: #2196F3;
+        }
+        .page-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+        .metric-card {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        .metric-value {
+            font-size: 2rem;
+            font-weight: bold;
+            margin: 10px 0;
+        }
+        .metric-label {
+            font-size: 0.9rem;
+            opacity: 0.8;
+        }
+        .scroll-info {
+            background: rgba(255, 193, 7, 0.1);
+            border: 1px solid rgba(255, 193, 7, 0.3);
+            padding: 10px;
+            border-radius: 6px;
+            margin: 10px 0;
+            font-size: 0.9rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📚 Test History Pagination & Scrollable</h1>
+        
+        <div class="test-section">
+            <h3>📋 Test Overview</h3>
+            <p>Test fitur pagination untuk daftar tryout di halaman history dengan maksimal 5 item per halaman. Tidak ada scroll, hanya pagination.</p>
+        </div>
+
+        <div class="demo-panel">
+            <h3>📊 Demo Configuration</h3>
+            <div class="metrics-grid">
+                <div class="metric-card">
+                    <div class="metric-value" id="totalSessions">0</div>
+                    <div class="metric-label">Total Sessions</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value" id="currentPage">1</div>
+                    <div class="metric-label">Current Page</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value" id="sessionsPerPage">5</div>
+                    <div class="metric-label">Sessions Per Page</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value" id="totalPages">0</div>
+                    <div class="metric-label">Total Pages</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="test-section">
+            <h3>🎯 Test Controls</h3>
+            <div class="controls">
+                <button class="control-btn btn-primary" onclick="generateSessions(10)">Generate 10 Sessions</button>
+                <button class="control-btn btn-success" onclick="generateSessions(25)">Generate 25 Sessions</button>
+                <button class="control-btn btn-warning" onclick="generateSessions(50)">Generate 50 Sessions</button>
+                <button class="control-btn btn-danger" onclick="clearSessions()">Clear Sessions</button>
+            </div>
+        </div>
+
+        <div class="session-list">
+            <h3>📅 Session List (No Scroll, Max 5 per Page)</h3>
+            <div class="scroll-info">
+                💡 <strong>Info:</strong> Container ini TIDAK dapat di-scroll. 
+                Hanya 5 session yang ditampilkan per halaman dengan pagination untuk performa optimal.
+            </div>
+            <div id="sessionList">
+                <p class="text-center text-gray-400">Click "Generate Sessions" to see pagination in action</p>
+            </div>
+        </div>
+
+        <div class="pagination-controls">
+            <div class="pagination-info">
+                <span id="paginationInfo">No sessions to display</span>
+            </div>
+            
+            <div class="pagination-buttons">
+                <button class="page-btn" id="prevBtn" onclick="prevPage()" disabled>← Previous</button>
+                
+                <div class="page-numbers" id="pageNumbers">
+                    <!-- Page numbers will be generated here -->
+                </div>
+                
+                <button class="page-btn" id="nextBtn" onclick="nextPage()" disabled>Next →</button>
+            </div>
+        </div>
+
+        <div class="test-section">
+            <h3>🔍 Selected Session Details</h3>
+            <div id="sessionDetails">
+                <p class="text-center text-gray-400">Select a session to see details</p>
+            </div>
+        </div>
+
+        <div class="log-panel">
+            <h3>📝 Activity Log</h3>
+            <div id="logContainer">
+                <div class="log-entry log-info">System initialized. Ready for testing pagination and scrollable features.</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        class HistoryPaginationTest {
+            constructor() {
+                this.sessions = [];
+                this.currentPage = 1;
+                this.sessionsPerPage = 5;
+                this.selectedSession = null;
+                
+                this.initialize();
+            }
+            
+            initialize() {
+                this.log('🚀 Initializing history pagination test...');
+                this.log('📋 Test scenarios:');
+                this.log('   • Generate different number of sessions (10, 25, 50)');
+                this.log('   • Test pagination with 5 sessions per page');
+                this.log('   • Test session list without scroll');
+                this.log('   • Test session selection and details');
+                this.log('   • Monitor pagination state and navigation');
+            }
+            
+            generateSessions(count) {
+                this.log(`🔄 Generating ${count} mock sessions...`);
+                
+                this.sessions = [];
+                for (let i = 0; i < count; i++) {
+                    this.sessions.push({
+                        id: `session-${i + 1}`,
+                        package_id: `package-${Math.floor(Math.random() * 5) + 1}`,
+                        status: Math.random() > 0.3 ? 'completed' : 'in_progress',
+                        created_at: new Date(Date.now() - Math.random() * 30 * 24 * 60 * 60 * 1000).toISOString(),
+                        total_score: Math.floor(Math.random() * 100) + 50,
+                        correct_answers: Math.floor(Math.random() * 20) + 10,
+                        wrong_answers: Math.floor(Math.random() * 15) + 5,
+                        unanswered: Math.floor(Math.random() * 10)
+                    });
+                }
+                
+                this.currentPage = 1;
+                this.log(`✅ Generated ${count} sessions successfully`, 'success');
+                this.updateDisplay();
+            }
+            
+            clearSessions() {
+                this.log('🗑️ Clearing all sessions...', 'warning');
+                this.sessions = [];
+                this.currentPage = 1;
+                this.selectedSession = null;
+                this.updateDisplay();
+                this.log('✅ Sessions cleared');
+            }
+            
+            getVisibleSessions() {
+                const startIndex = (this.currentPage - 1) * this.sessionsPerPage;
+                const endIndex = startIndex + this.sessionsPerPage;
+                return this.sessions.slice(startIndex, endIndex);
+            }
+            
+            getTotalPages() {
+                return Math.ceil(this.sessions.length / this.sessionsPerPage);
+            }
+            
+            nextPage() {
+                if (this.currentPage < this.getTotalPages()) {
+                    this.currentPage++;
+                    this.log(`➡️ Moved to page ${this.currentPage}`);
+                    this.updateDisplay();
+                }
+            }
+            
+            prevPage() {
+                if (this.currentPage > 1) {
+                    this.currentPage--;
+                    this.log(`⬅️ Moved to page ${this.currentPage}`);
+                    this.updateDisplay();
+                }
+            }
+            
+            goToPage(page) {
+                if (page >= 1 && page <= this.getTotalPages()) {
+                    this.currentPage = page;
+                    this.log(`🎯 Jumped to page ${page}`);
+                    this.updateDisplay();
+                }
+            }
+            
+            selectSession(session) {
+                this.selectedSession = session;
+                this.log(`🔍 Selected session: ${session.id}`);
+                this.updateDisplay();
+            }
+            
+            updateDisplay() {
+                this.updateMetrics();
+                this.renderSessionList();
+                this.renderPagination();
+                this.renderSessionDetails();
+            }
+            
+            updateMetrics() {
+                document.getElementById('totalSessions').textContent = this.sessions.length;
+                document.getElementById('currentPage').textContent = this.currentPage;
+                document.getElementById('sessionsPerPage').textContent = this.sessionsPerPage;
+                document.getElementById('totalPages').textContent = this.getTotalPages();
+            }
+            
+            renderSessionList() {
+                const container = document.getElementById('sessionList');
+                
+                if (this.sessions.length === 0) {
+                    container.innerHTML = '<p class="text-center text-gray-400">No sessions to display</p>';
+                    return;
+                }
+                
+                const visibleSessions = this.getVisibleSessions();
+                container.innerHTML = '';
+                
+                visibleSessions.forEach((session, index) => {
+                    const globalIndex = (this.currentPage - 1) * this.sessionsPerPage + index;
+                    const item = document.createElement('div');
+                    item.className = `session-item ${this.selectedSession?.id === session.id ? 'selected' : ''}`;
+                    
+                    item.innerHTML = `
+                        <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                            <div style="flex: 1;">
+                                <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 8px;">
+                                    <span style="background: rgba(255, 255, 255, 0.2); padding: 4px 8px; border-radius: 12px; font-size: 12px; font-weight: bold;">
+                                        #${globalIndex + 1}
+                                    </span>
+                                    <span style="color: ${session.status === 'completed' ? '#4CAF50' : '#FF9800'}; font-size: 12px;">
+                                        ${session.status === 'completed' ? '✅' : '⏳'}
+                                    </span>
+                                </div>
+                                <h4 style="margin: 0 0 5px 0; font-size: 16px;">
+                                    Package ${session.package_id}
+                                </h4>
+                                <p style="margin: 0; font-size: 12px; opacity: 0.8;">
+                                    ${new Date(session.created_at).toLocaleDateString()}
+                                </p>
+                                ${session.status === 'completed' ? `
+                                    <div style="margin-top: 10px; display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; font-size: 12px;">
+                                        <div>Score: <strong>${session.total_score}</strong></div>
+                                        <div>Correct: <strong style="color: #4CAF50;">${session.correct_answers}</strong></div>
+                                        <div>Wrong: <strong style="color: #f44336;">${session.wrong_answers}</strong></div>
+                                    </div>
+                                ` : ''}
+                            </div>
+                        </div>
+                    `;
+                    
+                    item.onclick = () => this.selectSession(session);
+                    container.appendChild(item);
+                });
+            }
+            
+            renderPagination() {
+                const totalPages = this.getTotalPages();
+                const prevBtn = document.getElementById('prevBtn');
+                const nextBtn = document.getElementById('nextBtn');
+                const pageNumbers = document.getElementById('pageNumbers');
+                const paginationInfo = document.getElementById('paginationInfo');
+                
+                if (this.sessions.length === 0) {
+                    paginationInfo.textContent = 'No sessions to display';
+                    prevBtn.disabled = true;
+                    nextBtn.disabled = true;
+                    pageNumbers.innerHTML = '';
+                    return;
+                }
+                
+                // Update pagination info
+                const startIndex = (this.currentPage - 1) * this.sessionsPerPage + 1;
+                const endIndex = Math.min(this.currentPage * this.sessionsPerPage, this.sessions.length);
+                paginationInfo.textContent = `Showing ${startIndex} - ${endIndex} of ${this.sessions.length} sessions`;
+                
+                // Update navigation buttons
+                prevBtn.disabled = this.currentPage === 1;
+                nextBtn.disabled = this.currentPage === totalPages;
+                
+                // Generate page numbers
+                pageNumbers.innerHTML = '';
+                for (let i = 1; i <= totalPages; i++) {
+                    const pageBtn = document.createElement('button');
+                    pageBtn.className = `page-btn ${this.currentPage === i ? 'active' : ''}`;
+                    pageBtn.textContent = i;
+                    pageBtn.onclick = () => this.goToPage(i);
+                    pageNumbers.appendChild(pageBtn);
+                }
+            }
+            
+            renderSessionDetails() {
+                const container = document.getElementById('sessionDetails');
+                
+                if (!this.selectedSession) {
+                    container.innerHTML = '<p class="text-center text-gray-400">Select a session to see details</p>';
+                    return;
+                }
+                
+                container.innerHTML = `
+                    <div style="background: rgba(255, 255, 255, 0.1); padding: 20px; border-radius: 8px;">
+                        <h4>${this.selectedSession.id}</h4>
+                        <p><strong>Status:</strong> ${this.selectedSession.status}</p>
+                        <p><strong>Package:</strong> ${this.selectedSession.package_id}</p>
+                        <p><strong>Created:</strong> ${new Date(this.selectedSession.created_at).toLocaleString()}</p>
+                        
+                        ${this.selectedSession.status === 'completed' ? `
+                            <hr style="margin: 15px 0; border-color: rgba(255, 255, 255, 0.2);">
+                            <h5>Results:</h5>
+                            <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin-top: 10px;">
+                                <div style="text-align: center; padding: 10px; background: rgba(76, 175, 80, 0.2); border-radius: 6px;">
+                                    <div style="font-size: 1.5rem; font-weight: bold; color: #4CAF50;">${this.selectedSession.total_score}</div>
+                                    <div style="font-size: 0.9rem;">Total Score</div>
+                                </div>
+                                <div style="text-align: center; padding: 10px; background: rgba(76, 175, 80, 0.2); border-radius: 6px;">
+                                    <div style="font-size: 1.5rem; font-weight: bold; color: #4CAF50;">${this.selectedSession.correct_answers}</div>
+                                    <div style="font-size: 0.9rem;">Correct</div>
+                                </div>
+                                <div style="text-align: center; padding: 10px; background: rgba(244, 67, 54, 0.2); border-radius: 6px;">
+                                    <div style="font-size: 1.5rem; font-weight: bold; color: #f44336;">${this.selectedSession.wrong_answers}</div>
+                                    <div style="font-size: 0.9rem;">Wrong</div>
+                                </div>
+                            </div>
+                        ` : `
+                            <hr style="margin: 15px 0; border-color: rgba(255, 255, 255, 0.2);">
+                            <p style="color: #FF9800;">This session is still in progress</p>
+                        `}
+                    </div>
+                `;
+            }
+            
+            log(message, type = 'info') {
+                const logContainer = document.getElementById('logContainer');
+                const logEntry = document.createElement('div');
+                logEntry.className = `log-entry log-${type}`;
+                
+                const timestamp = new Date().toLocaleTimeString();
+                logEntry.textContent = `[${timestamp}] ${message}`;
+                
+                logContainer.appendChild(logEntry);
+                logContainer.scrollTop = logContainer.scrollHeight;
+                
+                // Keep only last 30 log entries
+                while (logContainer.children.length > 30) {
+                    logContainer.removeChild(logContainer.firstChild);
+                }
+                
+                console.log(`[${type.toUpperCase()}] ${message}`);
+            }
+        }
+        
+        // Initialize test
+        let paginationTest;
+        
+        document.addEventListener('DOMContentLoaded', () => {
+            paginationTest = new HistoryPaginationTest();
+        });
+        
+        // Global functions for buttons
+        function generateSessions(count) {
+            if (paginationTest) paginationTest.generateSessions(count);
+        }
+        
+        function clearSessions() {
+            if (paginationTest) paginationTest.clearSessions();
+        }
+        
+        function prevPage() {
+            if (paginationTest) paginationTest.prevPage();
+        }
+        
+        function nextPage() {
+            if (paginationTest) paginationTest.nextPage();
+        }
+        
+        console.log('📚 History Pagination Test loaded!');
+        console.log('📋 Test pagination features without scroll for better UX');
+    </script>
+</body>
+</html>

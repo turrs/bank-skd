@@ -1,0 +1,617 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Review Statistics</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 50px auto;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        .container {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 30px;
+            border-radius: 15px;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        }
+        .test-section {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        .demo-panel {
+            background: rgba(76, 175, 80, 0.1);
+            border: 1px solid rgba(76, 175, 80, 0.3);
+            padding: 15px;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+        .controls {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin: 20px 0;
+        }
+        .control-btn {
+            padding: 12px 20px;
+            border: none;
+            border-radius: 6px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: bold;
+        }
+        .btn-primary { background: #2196F3; color: white; }
+        .btn-success { background: #4CAF50; color: white; }
+        .btn-warning { background: #FF9800; color: white; }
+        .btn-danger { background: #f44336; color: white; }
+        .control-btn:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3); }
+        .control-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+        .log-panel {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 15px;
+            border-radius: 8px;
+            margin: 20px 0;
+            max-height: 300px;
+            overflow-y: auto;
+            font-family: monospace;
+            font-size: 12px;
+        }
+        .log-entry {
+            margin: 5px 0;
+            padding: 8px;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 0.9rem;
+        }
+        .log-info { background: rgba(33, 150, 243, 0.2); }
+        .log-success { background: rgba(76, 175, 80, 0.2); }
+        .log-warning { background: rgba(255, 193, 7, 0.2); }
+        .log-error { background: rgba(244, 67, 54, 0.2); }
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin: 20px 0;
+        }
+        .stat-card {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 12px;
+            padding: 20px;
+            transition: all 0.3s ease;
+        }
+        .stat-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+        }
+        .stat-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        .category-badge {
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+        .badge-twk { background: rgba(59, 130, 246, 0.2); color: #60A5FA; }
+        .badge-tiu { background: rgba(34, 197, 94, 0.2); color: #4ADE80; }
+        .badge-tkp { background: rgba(168, 85, 247, 0.2); color: #A78BFA; }
+        .badge-other { background: rgba(107, 114, 128, 0.2); color: #9CA3AF; }
+        .question-count {
+            background: rgba(255, 255, 255, 0.2);
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 11px;
+        }
+        .accuracy-section {
+            margin: 15px 0;
+        }
+        .accuracy-bar {
+            width: 100%;
+            height: 8px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 4px;
+            overflow: hidden;
+            margin: 8px 0;
+        }
+        .accuracy-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #60A5FA, #34D399);
+            border-radius: 4px;
+            transition: width 0.5s ease;
+        }
+        .answer-breakdown {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            margin: 15px 0;
+        }
+        .answer-stat {
+            text-align: center;
+            padding: 10px;
+            border-radius: 8px;
+            font-size: 12px;
+        }
+        .stat-correct { background: rgba(34, 197, 94, 0.2); }
+        .stat-wrong { background: rgba(239, 68, 68, 0.2); }
+        .stat-unanswered { background: rgba(107, 114, 128, 0.2); }
+        .stat-value {
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 4px;
+        }
+        .stat-label {
+            font-size: 10px;
+            opacity: 0.8;
+        }
+        .points-time-stats {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 12px;
+            margin: 8px 0;
+        }
+        .icon {
+            width: 16px;
+            height: 16px;
+            margin-right: 6px;
+            display: inline-block;
+        }
+        .icon-target { background: rgba(59, 130, 246, 0.8); border-radius: 50%; }
+        .icon-clock { background: rgba(34, 197, 94, 0.8); border-radius: 50%; }
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+        .metric-card {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        .metric-value {
+            font-size: 2rem;
+            font-weight: bold;
+            margin: 10px 0;
+        }
+        .metric-label {
+            font-size: 0.9rem;
+            opacity: 0.8;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📊 Test Review Statistics</h1>
+        
+        <div class="test-section">
+            <h3>📋 Test Overview</h3>
+            <p>Test fitur "Statistik per Kategori Soal" yang telah dipindahkan dari halaman /history ke halaman review jawaban /review/</p>
+        </div>
+
+        <div class="demo-panel">
+            <h3>📊 Demo Configuration</h3>
+            <div class="metrics-grid">
+                <div class="metric-card">
+                    <div class="metric-value" id="totalStats">0</div>
+                    <div class="metric-label">Total Statistics</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value" id="categories">0</div>
+                    <div class="metric-label">Categories</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value" id="avgAccuracy">0%</div>
+                    <div class="metric-label">Avg Accuracy</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value" id="totalPoints">0</div>
+                    <div class="metric-label">Total Points</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="test-section">
+            <h3>🎯 Test Controls</h3>
+            <div class="controls">
+                <button class="control-btn btn-primary" onclick="generateTWKStats()">Generate TWK Stats</button>
+                <button class="control-btn btn-success" onclick="generateTIUStats()">Generate TIU Stats</button>
+                <button class="control-btn btn-warning" onclick="generateTKPStats()">Generate TKP Stats</button>
+                <button class="control-btn btn-danger" onclick="generateMixedStats()">Generate Mixed Stats</button>
+                <button class="control-btn btn-danger" onclick="clearStats()">Clear Stats</button>
+            </div>
+        </div>
+
+        <div class="test-section">
+            <h3>📈 Statistics per Kategori Soal</h3>
+            <div id="statsContainer">
+                <p class="text-center text-gray-400">Click "Generate Stats" to see statistics in action</p>
+            </div>
+        </div>
+
+        <div class="log-panel">
+            <h3>📝 Activity Log</h3>
+            <div id="logContainer">
+                <div class="log-entry log-info">System initialized. Ready for testing review statistics features.</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        class ReviewStatisticsTest {
+            constructor() {
+                this.tagStats = [];
+                this.initialize();
+            }
+            
+            initialize() {
+                this.log('🚀 Initializing review statistics test...');
+                this.log('📋 Test scenarios:');
+                this.log('   • Generate TWK, TIU, TKP statistics');
+                this.log('   • Test accuracy calculation and display');
+                this.log('   • Test answer breakdown visualization');
+                this.log('   • Test points and time statistics');
+                this.log('   • Monitor statistics loading and rendering');
+            }
+            
+            generateTWKStats() {
+                this.log('🔄 Generating TWK statistics...');
+                
+                const twkStats = [
+                    {
+                        id: 'twk-1',
+                        main_category: 'TWK',
+                        sub_category: 'Pancasila',
+                        total_questions: 15,
+                        correct_answers: 12,
+                        wrong_answers: 2,
+                        unanswered: 1,
+                        total_points: 85,
+                        average_time_seconds: 45,
+                        total_time_seconds: 675
+                    },
+                    {
+                        id: 'twk-2',
+                        main_category: 'TWK',
+                        sub_category: 'UUD 1945',
+                        total_questions: 20,
+                        correct_answers: 16,
+                        wrong_answers: 3,
+                        unanswered: 1,
+                        total_points: 92,
+                        average_time_seconds: 52,
+                        total_time_seconds: 1040
+                    },
+                    {
+                        id: 'twk-3',
+                        main_category: 'TWK',
+                        sub_category: 'Kebangsaan',
+                        total_questions: 18,
+                        correct_answers: 14,
+                        wrong_answers: 3,
+                        unanswered: 1,
+                        total_points: 88,
+                        average_time_seconds: 48,
+                        total_time_seconds: 864
+                    }
+                ];
+                
+                this.tagStats = twkStats;
+                this.log(`✅ Generated ${twkStats.length} TWK statistics successfully`, 'success');
+                this.updateDisplay();
+            }
+            
+            generateTIUStats() {
+                this.log('🔄 Generating TIU statistics...');
+                
+                const tiuStats = [
+                    {
+                        id: 'tiu-1',
+                        main_category: 'TIU',
+                        sub_category: 'Logika',
+                        total_questions: 25,
+                        correct_answers: 20,
+                        wrong_answers: 4,
+                        unanswered: 1,
+                        total_points: 95,
+                        average_time_seconds: 60,
+                        total_time_seconds: 1500
+                    },
+                    {
+                        id: 'tiu-2',
+                        main_category: 'TIU',
+                        sub_category: 'Matematika',
+                        total_questions: 30,
+                        correct_answers: 24,
+                        wrong_answers: 5,
+                        unanswered: 1,
+                        total_points: 90,
+                        average_time_seconds: 75,
+                        total_time_seconds: 2250
+                    }
+                ];
+                
+                this.tagStats = tiuStats;
+                this.log(`✅ Generated ${tiuStats.length} TIU statistics successfully`, 'success');
+                this.updateDisplay();
+            }
+            
+            generateTKPStats() {
+                this.log('🔄 Generating TKP statistics...');
+                
+                const tkpStats = [
+                    {
+                        id: 'tkp-1',
+                        main_category: 'TKP',
+                        sub_category: 'Pelayanan Publik',
+                        total_questions: 22,
+                        correct_answers: 18,
+                        wrong_answers: 3,
+                        unanswered: 1,
+                        total_points: 87,
+                        average_time_seconds: 40,
+                        total_time_seconds: 880
+                    },
+                    {
+                        id: 'tkp-2',
+                        main_category: 'TKP',
+                        sub_category: 'Sosial Budaya',
+                        total_questions: 20,
+                        correct_answers: 16,
+                        wrong_answers: 3,
+                        unanswered: 1,
+                        total_points: 85,
+                        average_time_seconds: 38,
+                        total_time_seconds: 760
+                    }
+                ];
+                
+                this.tagStats = tkpStats;
+                this.log(`✅ Generated ${tkpStats.length} TKP statistics successfully`, 'success');
+                this.updateDisplay();
+            }
+            
+            generateMixedStats() {
+                this.log('🔄 Generating mixed statistics...');
+                
+                const mixedStats = [
+                    {
+                        id: 'twk-1',
+                        main_category: 'TWK',
+                        sub_category: 'Pancasila',
+                        total_questions: 15,
+                        correct_answers: 12,
+                        wrong_answers: 2,
+                        unanswered: 1,
+                        total_points: 85,
+                        average_time_seconds: 45,
+                        total_time_seconds: 675
+                    },
+                    {
+                        id: 'tiu-1',
+                        main_category: 'TIU',
+                        sub_category: 'Logika',
+                        total_questions: 25,
+                        correct_answers: 20,
+                        wrong_answers: 4,
+                        unanswered: 1,
+                        total_points: 95,
+                        average_time_seconds: 60,
+                        total_time_seconds: 1500
+                    },
+                    {
+                        id: 'tkp-1',
+                        main_category: 'TKP',
+                        sub_category: 'Pelayanan Publik',
+                        total_questions: 22,
+                        correct_answers: 18,
+                        wrong_answers: 3,
+                        unanswered: 1,
+                        total_points: 87,
+                        average_time_seconds: 40,
+                        total_time_seconds: 880
+                    }
+                ];
+                
+                this.tagStats = mixedStats;
+                this.log(`✅ Generated ${mixedStats.length} mixed statistics successfully`, 'success');
+                this.updateDisplay();
+            }
+            
+            clearStats() {
+                this.log('🗑️ Clearing all statistics...', 'warning');
+                this.tagStats = [];
+                this.updateDisplay();
+                this.log('✅ Statistics cleared');
+            }
+            
+            updateDisplay() {
+                this.updateMetrics();
+                this.renderStatistics();
+            }
+            
+            updateMetrics() {
+                document.getElementById('totalStats').textContent = this.tagStats.length;
+                document.getElementById('categories').textContent = new Set(this.tagStats.map(s => s.main_category)).size;
+                
+                if (this.tagStats.length > 0) {
+                    const totalAccuracy = this.tagStats.reduce((sum, stat) => {
+                        const accuracy = stat.total_questions > 0 
+                            ? Math.round((stat.correct_answers / stat.total_questions) * 100)
+                            : 0;
+                        return sum + accuracy;
+                    }, 0);
+                    const avgAccuracy = Math.round(totalAccuracy / this.tagStats.length);
+                    document.getElementById('avgAccuracy').textContent = `${avgAccuracy}%`;
+                    
+                    const totalPoints = this.tagStats.reduce((sum, stat) => sum + Number(stat.total_points || 0), 0);
+                    document.getElementById('totalPoints').textContent = totalPoints;
+                } else {
+                    document.getElementById('avgAccuracy').textContent = '0%';
+                    document.getElementById('totalPoints').textContent = '0';
+                }
+            }
+            
+            renderStatistics() {
+                const container = document.getElementById('statsContainer');
+                
+                if (this.tagStats.length === 0) {
+                    container.innerHTML = '<p class="text-center text-gray-400">No statistics to display</p>';
+                    return;
+                }
+                
+                container.innerHTML = '';
+                
+                this.tagStats.forEach((stat) => {
+                    const accuracy = stat.total_questions > 0 
+                        ? Math.round((stat.correct_answers / stat.total_questions) * 100)
+                        : 0;
+                    
+                    const statCard = document.createElement('div');
+                    statCard.className = 'stat-card';
+                    
+                    statCard.innerHTML = `
+                        <div class="stat-header">
+                            <div>
+                                <span class="category-badge badge-${stat.main_category.toLowerCase()}">${stat.main_category}</span>
+                                <span class="question-count">${stat.total_questions} soal</span>
+                            </div>
+                        </div>
+                        
+                        ${stat.sub_category ? `<div style="margin-bottom: 15px; font-size: 14px; opacity: 0.8;">${stat.sub_category}</div>` : ''}
+                        
+                        <div class="accuracy-section">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                                <span style="font-size: 14px; opacity: 0.8;">Akurasi</span>
+                                <span style="font-weight: bold; color: ${this.getAccuracyColor(accuracy)}">${accuracy}%</span>
+                            </div>
+                            <div class="accuracy-bar">
+                                <div class="accuracy-fill" style="width: ${accuracy}%"></div>
+                            </div>
+                        </div>
+                        
+                        <div class="answer-breakdown">
+                            <div class="answer-stat stat-correct">
+                                <div class="stat-value">${stat.correct_answers}</div>
+                                <div class="stat-label">Benar</div>
+                            </div>
+                            <div class="answer-stat stat-wrong">
+                                <div class="stat-value">${stat.wrong_answers}</div>
+                                <div class="stat-label">Salah</div>
+                            </div>
+                            <div class="answer-stat stat-unanswered">
+                                <div class="stat-value">${stat.unanswered}</div>
+                                <div class="stat-label">Kosong</div>
+                            </div>
+                        </div>
+                        
+                        <div class="points-time-stats">
+                            <div style="display: flex; align-items: center;">
+                                <span class="icon icon-target"></span>
+                                <span>Total poin:</span>
+                            </div>
+                            <span style="font-weight: 500;">${Number(stat.total_points || 0)}</span>
+                        </div>
+                        
+                        <div class="points-time-stats">
+                            <div style="display: flex; align-items: center;">
+                                <span class="icon icon-clock"></span>
+                                <span>Rata-rata waktu:</span>
+                            </div>
+                            <span style="font-weight: 500;">${this.formatTime(stat.average_time_seconds)}</span>
+                        </div>
+                        
+                        <div class="points-time-stats">
+                            <div style="display: flex; align-items: center;">
+                                <span class="icon icon-target"></span>
+                                <span>Total waktu:</span>
+                            </div>
+                            <span style="font-weight: 500;">${this.formatTime(stat.total_time_seconds)}</span>
+                        </div>
+                    `;
+                    
+                    container.appendChild(statCard);
+                });
+            }
+            
+            getAccuracyColor(accuracy) {
+                if (accuracy >= 80) return "#34D399";
+                if (accuracy >= 60) return "#FBBF24";
+                return "#F87171";
+            }
+            
+            formatTime(seconds) {
+                const minutes = Math.floor(seconds / 60);
+                const remainingSeconds = seconds % 60;
+                return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
+            }
+            
+            log(message, type = 'info') {
+                const logContainer = document.getElementById('logContainer');
+                const logEntry = document.createElement('div');
+                logEntry.className = `log-entry log-${type}`;
+                
+                const timestamp = new Date().toLocaleTimeString();
+                logEntry.textContent = `[${timestamp}] ${message}`;
+                
+                logContainer.appendChild(logEntry);
+                logContainer.scrollTop = logContainer.scrollHeight;
+                
+                // Keep only last 30 log entries
+                while (logContainer.children.length > 30) {
+                    logContainer.removeChild(logContainer.firstChild);
+                }
+                
+                console.log(`[${type.toUpperCase()}] ${message}`);
+            }
+        }
+        
+        // Initialize test
+        let statisticsTest;
+        
+        document.addEventListener('DOMContentLoaded', () => {
+            statisticsTest = new ReviewStatisticsTest();
+        });
+        
+        // Global functions for buttons
+        function generateTWKStats() {
+            if (statisticsTest) statisticsTest.generateTWKStats();
+        }
+        
+        function generateTIUStats() {
+            if (statisticsTest) statisticsTest.generateTIUStats();
+        }
+        
+        function generateTKPStats() {
+            if (statisticsTest) statisticsTest.generateTKPStats();
+        }
+        
+        function generateMixedStats() {
+            if (statisticsTest) statisticsTest.generateMixedStats();
+        }
+        
+        function clearStats() {
+            if (statisticsTest) statisticsTest.clearStats();
+        }
+        
+        console.log('📊 Review Statistics Test loaded!');
+        console.log('📋 Test statistics per kategori soal in review page');
+    </script>
+</body>
+</html>

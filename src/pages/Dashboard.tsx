@@ -150,6 +150,7 @@ const Dashboard = () => {
       
       console.log('Packages loaded:', packageList);
       console.log('Sessions loaded:', sessions);
+      console.log('Sessions details:', sessions.map(s => ({ id: s.id, package_id: s.package_id, status: s.status, user_id: s.user_id })));
       console.log('Payments loaded:', payments);
       
       setPackages(Array.isArray(packageList) ? packageList : []);
@@ -230,6 +231,42 @@ const Dashboard = () => {
     
     console.log('Has access:', hasAccess);
     return hasAccess;
+  };
+
+  // Function to check if user has ongoing tryout for a specific package
+  const hasOngoingTryout = (packageId) => {
+    console.log('🔍 Checking ongoing tryout for package:', packageId);
+    console.log('📊 Available sessions:', recentSessions);
+    
+    const ongoingSession = recentSessions.find(session => {
+      const isMatch = session.package_id === packageId && session.status === 'in_progress';
+      console.log(`Session ${session.id}: package_id=${session.package_id}, status=${session.status}, isMatch=${isMatch}`);
+      return isMatch;
+    });
+    
+    console.log('✅ Found ongoing session:', ongoingSession);
+    return ongoingSession || null;
+  };
+
+  // Function to get tryout button text and action
+  const getTryoutButtonInfo = (packageData) => {
+    const ongoingSession = hasOngoingTryout(packageData.id);
+    
+    if (ongoingSession) {
+      return {
+        text: 'Resume Tryout',
+        action: () => navigate(`/tryout/${packageData.id}`),
+        variant: 'bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600',
+        icon: <Clock className="w-4 h-4 mr-2" />
+      };
+    } else {
+      return {
+        text: 'Mulai Tryout',
+        action: () => handleStartTryout(packageData),
+        variant: 'bg-gradient-to-r from-blue-600 via-blue-700 to-indigo-700 hover:from-blue-700 hover:via-blue-800 hover:to-indigo-800',
+        icon: <Play className="w-4 h-4 mr-2" />
+      };
+    }
   };
 
   const handleStartTryout = (packageData) => {
@@ -697,25 +734,20 @@ const Dashboard = () => {
             <div className="space-y-6">
               {/* Available Packages dengan UI Marketing */}
               <div className="mb-8">
-                <div className="text-center mb-8">
-                  <h2 className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent mb-2">
-                    Paket Soal Premium
-                  </h2>
-                  <p className="text-lg text-blue-700 font-medium">Pilih paket yang sesuai dengan kebutuhanmu</p>
-                </div>
+                
                  {/* Unpurchased Tryout Packages */}
         <SmartLoadingSkeleton 
           isLoading={loading} 
           fallback={
             <div className="mt-8 sm:mt-12">
-              <h2 className="text-lg sm:text-xl font-semibold mb-4">Paket Tryout</h2>
+              
               <PackageCardSkeletonList count={4} />
             </div>
           }
         >
           {packages.filter(pkg => !hasAccessToPackage(pkg)).length > 0 ? (
             <div className="mt-8 sm:mt-12">
-              <h2 className="text-lg sm:text-xl font-semibold mb-6">Paket Tryout</h2>
+             
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                 {packages
                   .filter(pkg => !hasAccessToPackage(pkg))
@@ -911,80 +943,74 @@ const Dashboard = () => {
                 
                 return (
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
-                    {myPackages.map((pkg) => (
-                      <Card key={pkg.id} className="hover:shadow-2xl transition-all duration-300 border-0 bg-white/80 backdrop-blur-md shadow-xl rounded-2xl overflow-hidden">
-                        <CardHeader className="bg-gradient-to-r from-blue-600 via-blue-700 to-indigo-700 text-white p-4 sm:p-6">
-                          <CardTitle className="text-base sm:text-lg text-white">{pkg.title}</CardTitle>
-                          <CardDescription className="text-blue-100 text-sm">{pkg.description}</CardDescription>
-                        </CardHeader>
-                        <CardContent className="space-y-4 bg-white/90 backdrop-blur-sm p-4 sm:p-6">
-                          <div className="space-y-2">
-                            <div className="flex items-center text-sm text-gray-700">
-                              <Clock className="w-4 h-4 mr-2 text-blue-500" />
-                              <span>{pkg.duration_minutes} menit pengerjaan</span>
+                    {myPackages.map((pkg) => {
+                      const { text, action, variant, icon } = getTryoutButtonInfo(pkg);
+                      const ongoingSession = hasOngoingTryout(pkg.id);
+                      
+                      return (
+                        <Card key={pkg.id} className="hover:shadow-2xl transition-all duration-300 border-0 bg-white/80 backdrop-blur-md shadow-xl rounded-2xl overflow-hidden">
+                          <CardHeader className="bg-gradient-to-r from-blue-600 via-blue-700 to-indigo-700 text-white p-4 sm:p-6">
+                            <CardTitle className="text-base sm:text-lg text-white">{pkg.title}</CardTitle>
+                            <CardDescription className="text-blue-100 text-sm">{pkg.description}</CardDescription>
+                            
+                            {/* Status indicator for ongoing tryout */}
+                            {ongoingSession && (
+                              <div className="mt-2 flex items-center space-x-2">
+                                <div className="w-2 h-2 bg-orange-400 rounded-full animate-pulse"></div>
+                                <span className="text-xs text-orange-100 font-medium">
+                                  Tryout sedang berlangsung
+                                </span>
+                              </div>
+                            )}
+                          </CardHeader>
+                          <CardContent className="space-y-4 bg-white/90 backdrop-blur-sm p-4 sm:p-6">
+                            <div className="space-y-2">
+                              <div className="flex items-center text-sm text-gray-700">
+                                <Clock className="w-4 h-4 mr-2 text-blue-500" />
+                                <span>{pkg.duration_minutes} menit pengerjaan</span>
+                              </div>
+                              <div className="flex items-center text-sm text-gray-700">
+                                <BookOpen className="w-4 h-4 mr-2 text-blue-500" />
+                                <span>{pkg.total_questions} soal berkualitas</span>
+                              </div>
+                              <div className="flex items-center text-sm text-gray-700">
+                                <Zap className="w-4 h-4 mr-2 text-blue-500" />
+                                <span>Pembahasan lengkap</span>
+                              </div>
+                              
+                              {/* Show progress if ongoing tryout */}
+                              {ongoingSession && (
+                                <div className="pt-2 border-t border-gray-200">
+                                  <div className="flex items-center justify-between text-xs text-gray-600 mb-1">
+                                    <span>Progress Tryout</span>
+                                    <span>Berlangsung</span>
+                                  </div>
+                                  <div className="w-full bg-gray-200 rounded-full h-2">
+                                    <div className="bg-orange-500 h-2 rounded-full animate-pulse" style={{ width: '25%' }}></div>
+                                  </div>
+                                </div>
+                              )}
                             </div>
-                            <div className="flex items-center text-sm text-gray-700">
-                              <BookOpen className="w-4 h-4 mr-2 text-blue-500" />
-                              <span>{pkg.total_questions} soal berkualitas</span>
-                            </div>
-                            <div className="flex items-center text-sm text-gray-700">
-                              <Zap className="w-4 h-4 mr-2 text-blue-500" />
-                              <span>Pembahasan lengkap</span>
-                            </div>
-                          </div>
-                          
-                         
-                          
-                          <Button 
-                            className="w-full bg-gradient-to-r from-blue-600 via-blue-700 to-indigo-700 hover:from-blue-700 hover:via-blue-800 hover:to-indigo-800 shadow-xl hover:shadow-2xl text-white font-bold transition-all duration-300 hover:scale-105"
-                            onClick={() => handleStartTryout(pkg)}
-                          >
-                            <Play className="w-4 h-4 mr-2" />
-                            Mulai Tryout
-                          </Button>
-                        </CardContent>
-                      </Card>
-                    ))}
+                            
+                           
+                            <Button 
+                              className={`w-full ${variant} hover:scale-105 transition-all duration-300 shadow-xl hover:shadow-2xl text-white font-bold`}
+                              onClick={action}
+                            >
+                              {icon}
+                              {text}
+                            </Button>
+                          </CardContent>
+                        </Card>
+                      );
+                    })}
                   </div>
                 );
               })()}
             </div>
           )}
 
-        {/* Recent Sessions */}
-        {recentSessions.length > 0 && (
-            <div className="mt-8 sm:mt-12">
-              <h2 className="text-lg sm:text-xl font-semibold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent mb-4">
-                Tryout Terbaru
-              </h2>
-            <Card className="bg-white/80 backdrop-blur-md border-0 shadow-xl rounded-2xl">
-              <CardContent className="p-0">
-                <div className="divide-y">
-                  {recentSessions.map((session) => (
-                      <div key={session.id} className="p-3 sm:p-4 flex flex-col sm:flex-row justify-between items-start sm:items-center space-y-2 sm:space-y-0">
-                      <div>
-                          <p className="font-medium text-sm sm:text-base">Sesi Tryout</p>
-                          <p className="text-xs sm:text-sm text-gray-600">
-                          {new Date(session.created_at).toLocaleDateString('id-ID')}
-                        </p>
-                      </div>
-                        <div className="text-left sm:text-right">
-                        <Badge variant={session.status === 'completed' ? 'default' : 'secondary'}>
-                          {session.status === 'completed' ? 'Selesai' : 'Berlangsung'}
-                        </Badge>
-                        {session.status === 'completed' && (
-                            <p className="text-xs sm:text-sm text-gray-600 mt-1">
-                            Skor: {session.total_score}
-                          </p>
-                        )}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-        )}
+
 
        
       </div>

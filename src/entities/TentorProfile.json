@@ -1,0 +1,85 @@
+{
+  "name": "TentorProfile",
+  "table": "tentor_profiles",
+  "fields": [
+    {
+      "name": "id",
+      "type": "uuid",
+      "primary": true
+    },
+    {
+      "name": "user_id",
+      "type": "uuid",
+      "references": "users.id"
+    },
+    {
+      "name": "created_at",
+      "type": "timestamp",
+      "default": "now()"
+    },
+    {
+      "name": "updated_at",
+      "type": "timestamp",
+      "default": "now()"
+    },
+    {
+      "name": "specialization",
+      "type": "text[]",
+      "description": "Array of subjects the tentor can teach (TWK, TIU, TKP, etc.)"
+    },
+    {
+      "name": "experience_years",
+      "type": "integer",
+      "default": 0,
+      "description": "Years of teaching experience"
+    },
+    {
+      "name": "education_level",
+      "type": "text",
+      "description": "Education level (S1, S2, S3, etc.)"
+    },
+    {
+      "name": "certification",
+      "type": "text[]",
+      "description": "Array of certifications"
+    },
+    {
+      "name": "bio",
+      "type": "text",
+      "description": "Tentor biography and description"
+    },
+    {
+      "name": "hourly_rate",
+      "type": "integer",
+      "default": 0,
+      "description": "Rate per hour in IDR"
+    },
+    {
+      "name": "is_verified",
+      "type": "boolean",
+      "default": false,
+      "description": "Admin verification status"
+    },
+    {
+      "name": "is_active",
+      "type": "boolean",
+      "default": true,
+      "description": "Whether tentor is accepting students"
+    },
+    {
+      "name": "whatsapp",
+      "type": "text",
+      "description": "WhatsApp contact number"
+    },
+    {
+      "name": "telegram",
+      "type": "text",
+      "description": "Telegram username"
+    },
+    {
+      "name": "linkedin",
+      "type": "text",
+      "description": "LinkedIn profile URL"
+    }
+  ]
+}

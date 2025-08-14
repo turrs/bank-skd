@@ -1,0 +1,627 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Robust Close Tab Auto-Resume Timer Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        .container {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 30px;
+            border-radius: 15px;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        }
+        .timer-display {
+            font-size: 3rem;
+            font-weight: bold;
+            text-align: center;
+            margin: 30px 0;
+            font-family: 'Courier New', monospace;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+        }
+        .controls {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin: 20px 0;
+        }
+        button {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: bold;
+        }
+        .start { background: #4CAF50; color: white; }
+        .pause { background: #FF9800; color: white; }
+        .resume { background: #2196F3; color: white; }
+        .reset { background: #f44336; color: white; }
+        .test { background: #9C27B0; color: white; }
+        button:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3); }
+        .status {
+            text-align: center;
+            margin: 20px 0;
+            padding: 15px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+        }
+        .info {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+            font-size: 14px;
+        }
+        .warning {
+            background: rgba(255, 193, 7, 0.2);
+            border: 1px solid rgba(255, 193, 7, 0.5);
+            padding: 15px;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+        .test-section {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        .session-info {
+            background: rgba(76, 175, 80, 0.1);
+            border: 1px solid rgba(76, 175, 80, 0.3);
+            padding: 15px;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+        .success {
+            background: rgba(76, 175, 80, 0.2);
+            border: 1px solid rgba(76, 175, 80, 0.5);
+            padding: 15px;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+        .detection-methods {
+            background: rgba(33, 150, 243, 0.1);
+            border: 1px solid rgba(33, 150, 243, 0.3);
+            padding: 15px;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🚪 Robust Close Tab Auto-Resume Timer Test</h1>
+        
+        <div class="warning">
+            <strong>🧪 Test Instructions:</strong>
+            <ul>
+                <li>Start timer and watch it count down</li>
+                <li>Try to close the tab - you'll see a confirmation dialog</li>
+                <li>Click "Cancel" - timer should resume automatically using multiple detection methods</li>
+                <li>Click "Leave" - timer state will be saved (fallback scenario)</li>
+                <li>Check console for detailed logs of detection methods</li>
+            </ul>
+        </div>
+
+        <div class="timer-display" id="timer">00:00</div>
+        
+        <div class="controls">
+            <button class="start" onclick="startTimer()">Start</button>
+            <button class="pause" onclick="pauseTimer()">Pause</button>
+            <button class="resume" onclick="resumeTimer()">Resume</button>
+            <button class="reset" onclick="resetTimer()">Reset</button>
+        </div>
+        
+        <div class="test-section">
+            <h3>🧪 Close Tab Test</h3>
+            <div class="controls">
+                <button class="test" onclick="testCloseTab()">Test Close Tab</button>
+                <button class="test" onclick="simulateBeforeUnload()">Simulate BeforeUnload</button>
+                <button class="test" onclick="simulateVisibilityChange()">Simulate Visibility Change</button>
+                <button class="test" onclick="simulateFocus()">Simulate Focus</button>
+                <button class="test" onclick="clearSessionStorage()">Clear Session Storage</button>
+            </div>
+        </div>
+        
+        <div class="success" id="autoResumeStatus">
+            <h4>✅ Auto-Resume Status</h4>
+            <div id="autoResumeDetails">Timer will auto-resume when you cancel close tab using multiple detection methods</div>
+        </div>
+        
+        <div class="detection-methods" id="detectionMethods">
+            <h4>🔍 Detection Methods Status</h4>
+            <div id="detectionDetails">
+                <strong>BeforeUnload:</strong> <span id="beforeUnloadStatus">Ready</span><br>
+                <strong>Visibility Change:</strong> <span id="visibilityStatus">Ready</span><br>
+                <strong>Focus Detection:</strong> <span id="focusStatus">Ready</span><br>
+                <strong>Close Attempt Time:</strong> <span id="closeTimeStatus">None</span>
+            </div>
+        </div>
+        
+        <div class="session-info" id="sessionInfo">
+            <h4>📊 Session Information</h4>
+            <div id="sessionDetails">No active session</div>
+        </div>
+        
+        <div class="status" id="status">
+            <strong>Status:</strong> <span id="statusText">Stopped</span><br>
+            <strong>Time Left:</strong> <span id="timeLeft">0</span> seconds<br>
+            <strong>Is Running:</strong> <span id="isRunning">false</span><br>
+            <strong>Is Paused:</strong> <span id="isPaused">false</span><br>
+            <strong>Session ID:</strong> <span id="sessionId">None</span>
+        </div>
+        
+        <div class="info">
+            <h3>🔧 Robust Auto-Resume Timer Features:</h3>
+            <ul>
+                <li><strong>Multiple Detection Methods:</strong> BeforeUnload + Visibility + Focus</li>
+                <li><strong>Time-Based Logic:</strong> Detects close cancellation within 5 seconds</li>
+                <li><strong>Smart State Management:</strong> Tracks close attempt timing</li>
+                <li><strong>Fallback Recovery:</strong> Session storage for edge cases</li>
+                <li><strong>Cross-Browser Compatible:</strong> Works on all modern browsers</li>
+            </ul>
+        </div>
+    </div>
+
+    <script>
+        class RobustAutoResumeTimer {
+            constructor(initialTime = 300) { // 5 minutes default
+                this.initialTime = initialTime;
+                this.timeLeft = initialTime;
+                this.isRunning = false;
+                this.isPaused = false;
+                this.pauseStartTime = null;
+                this.totalPausedTime = 0;
+                this.interval = null;
+                this.sessionId = 'test-session-' + Date.now();
+                this.packageId = 'test-package-123';
+                this.wasPausedDueToClose = false;
+                this.closeAttemptTime = 0;
+                
+                this.updateDisplay();
+                this.updateStatus();
+                this.setupCloseTabHandlers();
+                this.restoreFromSessionStorage();
+            }
+            
+            setupCloseTabHandlers() {
+                // Handle beforeunload (closing tab/window)
+                window.addEventListener('beforeunload', (event) => {
+                    if (this.timeLeft > 0 && this.isRunning && !this.isPaused) {
+                        console.log('🚪 BeforeUnload detected - pausing timer');
+                        
+                        // Pause timer and mark as paused due to close
+                        this.pause();
+                        this.wasPausedDueToClose = true;
+                        this.closeAttemptTime = Date.now();
+                        
+                        // Save timer state to session storage for potential recovery
+                        sessionStorage.setItem('tryout_pause_time', this.closeAttemptTime.toString());
+                        sessionStorage.setItem('tryout_time_left', this.timeLeft.toString());
+                        sessionStorage.setItem('tryout_session_id', this.sessionId);
+                        sessionStorage.setItem('tryout_package_id', this.packageId);
+                        sessionStorage.setItem('tryout_was_paused', 'true');
+                        sessionStorage.setItem('tryout_close_attempt_time', this.closeAttemptTime.toString());
+                        
+                        const message = '⚠️ Timer sedang berlangsung! Jika Anda meninggalkan halaman ini, timer akan berakhir. Apakah Anda yakin ingin keluar?';
+                        event.preventDefault();
+                        event.returnValue = message;
+                        
+                        console.log('💾 Timer state saved to session storage');
+                        this.updateDetectionStatus('BeforeUnload', 'Timer paused due to close attempt');
+                        return message;
+                    }
+                });
+                
+                // Handle page visibility change
+                document.addEventListener('visibilitychange', () => {
+                    if (document.hidden) {
+                        console.log('👁️ Page hidden');
+                        this.updateDetectionStatus('Visibility', 'Page hidden');
+                    } else {
+                        console.log('👁️ Page visible');
+                        this.updateDetectionStatus('Visibility', 'Page visible - checking for close cancellation');
+                        
+                        // Check if we should resume timer
+                        if (this.isPaused && this.timeLeft > 0) {
+                            // Check if timer was paused due to close attempt
+                            const savedCloseAttemptTime = sessionStorage.getItem('tryout_close_attempt_time');
+                            const savedWasPaused = sessionStorage.getItem('tryout_was_paused');
+                            
+                            if (savedCloseAttemptTime && savedWasPaused === 'true') {
+                                const closeTime = parseInt(savedCloseAttemptTime);
+                                const timeSinceClose = Date.now() - closeTime;
+                                
+                                // If it's been less than 5 seconds since close attempt, likely user cancelled
+                                if (timeSinceClose < 5000) {
+                                    console.log('🔄 Page visible after close attempt - likely user cancelled, resuming timer');
+                                    this.updateDetectionStatus('Visibility', 'Close cancellation detected - resuming timer');
+                                    
+                                    // Clear close attempt markers
+                                    sessionStorage.removeItem('tryout_close_attempt_time');
+                                    sessionStorage.removeItem('tryout_was_paused');
+                                    
+                                    // Resume timer after a short delay
+                                    setTimeout(() => {
+                                        if (this.timeLeft > 0) {
+                                            this.resume();
+                                            console.log('▶️ Timer resumed after user cancelled close tab (visibility detection)');
+                                            this.updateAutoResumeStatus('✅ Timer auto-resumed via visibility detection!');
+                                        }
+                                    }, 100);
+                                    
+                                    return;
+                                }
+                            }
+                            
+                            // Regular visibility resume (not from close attempt)
+                            setTimeout(() => {
+                                if (document.visibilityState === 'visible' && this.timeLeft > 0 && this.isPaused) {
+                                    this.resume();
+                                    console.log('▶️ Timer resumed after page became visible');
+                                }
+                            }, 100);
+                        }
+                    }
+                });
+                
+                // Handle page focus/blur detection
+                window.addEventListener('focus', () => {
+                    console.log('🎯 Page focused');
+                    this.updateDetectionStatus('Focus', 'Page focused - checking for close cancellation');
+                    
+                    if (this.wasPausedDueToClose && this.isPaused && this.timeLeft > 0) {
+                        const timeSinceClose = Date.now() - this.closeAttemptTime;
+                        
+                        // If it's been less than 5 seconds since close attempt, likely user cancelled
+                        if (timeSinceClose < 5000) {
+                            console.log('🔄 Page focused after close attempt - likely user cancelled, resuming timer');
+                            this.updateDetectionStatus('Focus', 'Close cancellation detected - resuming timer');
+                            this.wasPausedDueToClose = false;
+                            
+                            // Clear close attempt markers
+                            sessionStorage.removeItem('tryout_close_attempt_time');
+                            sessionStorage.removeItem('tryout_was_paused');
+                            
+                            // Resume timer after a short delay
+                            setTimeout(() => {
+                                if (this.timeLeft > 0 && this.isPaused) {
+                                    this.resume();
+                                    console.log('▶️ Timer resumed after user cancelled close tab (focus detection)');
+                                    this.updateAutoResumeStatus('✅ Timer auto-resumed via focus detection!');
+                                }
+                            }, 100);
+                        }
+                    }
+                });
+                
+                window.addEventListener('blur', () => {
+                    console.log('🎯 Page blurred');
+                    this.updateDetectionStatus('Focus', 'Page blurred');
+                });
+            }
+            
+            updateDetectionStatus(method, status) {
+                const statusElement = document.getElementById(method.toLowerCase() + 'Status');
+                if (statusElement) {
+                    statusElement.textContent = status;
+                    statusElement.style.color = status.includes('resuming') ? '#4CAF50' : '#FF9800';
+                }
+                
+                // Update close time status
+                if (this.closeAttemptTime > 0) {
+                    const timeSinceClose = Math.floor((Date.now() - this.closeAttemptTime) / 1000);
+                    const closeTimeElement = document.getElementById('closeTimeStatus');
+                    if (closeTimeElement) {
+                        closeTimeElement.textContent = `${timeSinceClose}s ago`;
+                        closeTimeElement.style.color = timeSinceClose < 5 ? '#4CAF50' : '#FF9800';
+                    }
+                }
+            }
+            
+            updateAutoResumeStatus(message) {
+                const autoResumeDetails = document.getElementById('autoResumeDetails');
+                autoResumeDetails.innerHTML = message;
+                
+                // Reset status after 5 seconds
+                setTimeout(() => {
+                    autoResumeDetails.innerHTML = 'Timer will auto-resume when you cancel close tab using multiple detection methods';
+                }, 5000);
+            }
+            
+            restoreFromSessionStorage() {
+                const savedPauseTime = sessionStorage.getItem('tryout_pause_time');
+                const savedTimeLeft = sessionStorage.getItem('tryout_time_left');
+                const savedSessionId = sessionStorage.getItem('tryout_session_id');
+                const savedPackageId = sessionStorage.getItem('tryout_package_id');
+                const wasPaused = sessionStorage.getItem('tryout_was_paused');
+                
+                if (savedPauseTime && savedTimeLeft && savedSessionId && savedPackageId && wasPaused === 'true') {
+                    console.log('🔄 Found saved timer state in session storage');
+                    
+                    // Check if we're on the same package page
+                    if (savedPackageId === this.packageId && savedSessionId === this.sessionId) {
+                        const pauseTime = parseInt(savedPauseTime);
+                        const timeLeftWhenPaused = parseInt(savedTimeLeft);
+                        
+                        // Calculate how long the timer was paused
+                        const pauseDuration = Date.now() - pauseTime;
+                        const adjustedTime = Math.max(0, timeLeftWhenPaused + Math.floor(pauseDuration / 1000));
+                        
+                        if (adjustedTime > 0) {
+                            // Restore timer state
+                            this.timeLeft = adjustedTime;
+                            this.updateDisplay();
+                            console.log('🔄 Timer restored from session storage:', adjustedTime, 'seconds remaining');
+                            
+                            // Clear session storage
+                            this.clearSessionStorage();
+                        } else {
+                            // Time is up, clear storage
+                            this.clearSessionStorage();
+                            console.log('⏰ Timer time is up, clearing session storage');
+                        }
+                    } else {
+                        // Different package or session, clear storage
+                        this.clearSessionStorage();
+                        console.log('🔄 Different package/session, clearing session storage');
+                    }
+                } else {
+                    console.log('ℹ️ No saved timer state found in session storage');
+                }
+            }
+            
+            clearSessionStorage() {
+                sessionStorage.removeItem('tryout_pause_time');
+                sessionStorage.removeItem('tryout_time_left');
+                sessionStorage.removeItem('tryout_session_id');
+                sessionStorage.removeItem('tryout_package_id');
+                sessionStorage.removeItem('tryout_was_paused');
+                sessionStorage.removeItem('tryout_close_attempt_time');
+                console.log('🧹 Session storage cleared');
+                
+                // Reset detection status
+                this.updateDetectionStatus('BeforeUnload', 'Ready');
+                this.updateDetectionStatus('Visibility', 'Ready');
+                this.updateDetectionStatus('Focus', 'Ready');
+                document.getElementById('closeTimeStatus').textContent = 'None';
+            }
+            
+            start() {
+                if (this.timeLeft > 0 && !this.isRunning) {
+                    this.isRunning = true;
+                    this.isPaused = false;
+                    this.pauseStartTime = null;
+                    this.wasPausedDueToClose = false;
+                    this.closeAttemptTime = 0;
+                    
+                    this.interval = setInterval(() => {
+                        if (this.timeLeft > 0 && !this.isPaused) {
+                            this.timeLeft--;
+                            this.updateDisplay();
+                            
+                            if (this.timeLeft <= 0) {
+                                this.stop();
+                                console.log('⏰ Time is up!');
+                            }
+                        }
+                    }, 1000);
+                    
+                    console.log('🚀 Timer started');
+                    this.updateStatus();
+                }
+            }
+            
+            pause() {
+                if (this.isRunning && !this.isPaused) {
+                    this.isPaused = true;
+                    this.pauseStartTime = Date.now();
+                    
+                    if (this.interval) {
+                        clearInterval(this.interval);
+                        this.interval = null;
+                    }
+                    
+                    console.log('⏸️ Timer paused');
+                    this.updateStatus();
+                }
+            }
+            
+            resume() {
+                if (this.isPaused && this.pauseStartTime) {
+                    const pauseDuration = Date.now() - this.pauseStartTime;
+                    this.totalPausedTime += pauseDuration;
+                    this.isPaused = false;
+                    this.pauseStartTime = null;
+                    
+                    // Restart interval
+                    if (this.timeLeft > 0) {
+                        this.interval = setInterval(() => {
+                            if (this.timeLeft > 0 && !this.isPaused) {
+                                this.timeLeft--;
+                                this.updateDisplay();
+                                
+                                if (this.timeLeft <= 0) {
+                                    this.stop();
+                                    console.log('⏰ Time is up!');
+                                }
+                            }
+                        }, 1000);
+                    }
+                    
+                    console.log('▶️ Timer resumed');
+                    this.updateStatus();
+                }
+            }
+            
+            reset() {
+                this.stop();
+                this.timeLeft = this.initialTime;
+                this.totalPausedTime = 0;
+                this.wasPausedDueToClose = false;
+                this.closeAttemptTime = 0;
+                this.updateDisplay();
+                this.updateStatus();
+                console.log('🔄 Timer reset');
+            }
+            
+            stop() {
+                this.isRunning = false;
+                this.isPaused = false;
+                this.pauseStartTime = null;
+                this.wasPausedDueToClose = false;
+                this.closeAttemptTime = 0;
+                
+                if (this.interval) {
+                    clearInterval(this.interval);
+                    this.interval = null;
+                }
+                
+                this.updateStatus();
+            }
+            
+            setTime(seconds) {
+                this.timeLeft = seconds;
+                this.updateDisplay();
+                console.log('⏰ Timer set to:', seconds, 'seconds');
+            }
+            
+            updateDisplay() {
+                const minutes = Math.floor(this.timeLeft / 60);
+                const seconds = this.timeLeft % 60;
+                document.getElementById('timer').textContent = 
+                    `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+            }
+            
+            updateStatus() {
+                document.getElementById('statusText').textContent = 
+                    this.isPaused ? 'Paused' : (this.isRunning ? 'Running' : 'Stopped');
+                document.getElementById('timeLeft').textContent = this.timeLeft;
+                document.getElementById('isRunning').textContent = this.isRunning.toString();
+                document.getElementById('isPaused').textContent = this.isPaused.toString();
+                document.getElementById('sessionId').textContent = this.sessionId;
+                
+                // Update session info
+                const sessionDetails = document.getElementById('sessionDetails');
+                sessionDetails.innerHTML = `
+                    <strong>Session ID:</strong> ${this.sessionId}<br>
+                    <strong>Package ID:</strong> ${this.packageId}<br>
+                    <strong>Time Left:</strong> ${this.timeLeft} seconds<br>
+                    <strong>Status:</strong> ${this.isPaused ? 'Paused' : (this.isRunning ? 'Running' : 'Stopped')}<br>
+                    <strong>Total Paused:</strong> ${Math.round(this.totalPausedTime / 1000)} seconds<br>
+                    <strong>Paused Due to Close:</strong> ${this.wasPausedDueToClose ? 'Yes' : 'No'}<br>
+                    <strong>Close Attempt Time:</strong> ${this.closeAttemptTime > 0 ? new Date(this.closeAttemptTime).toLocaleTimeString() : 'None'}
+                `;
+            }
+        }
+        
+        // Initialize timer
+        const timer = new RobustAutoResumeTimer(300); // 5 minutes
+        
+        // Global functions for buttons
+        function startTimer() {
+            timer.start();
+        }
+        
+        function pauseTimer() {
+            timer.pause();
+        }
+        
+        function resumeTimer() {
+            timer.resume();
+        }
+        
+        function resetTimer() {
+            timer.reset();
+        }
+        
+        // Test functions
+        function testCloseTab() {
+            if (timer.timeLeft > 0 && timer.isRunning && !timer.isPaused) {
+                console.log('🧪 Testing close tab scenario...');
+                alert('Now try to close this tab. You should see a confirmation dialog. Click "Cancel" to keep the timer running, or "Leave" to save the timer state.');
+            } else {
+                alert('Please start the timer first to test close tab!');
+            }
+        }
+        
+        function simulateBeforeUnload() {
+            if (timer.timeLeft > 0 && timer.isRunning && !timer.isPaused) {
+                console.log('🧪 Simulating beforeunload event...');
+                
+                // Simulate beforeunload event
+                const event = new Event('beforeunload');
+                event.preventDefault = () => {};
+                event.returnValue = 'Test message';
+                
+                // Manually trigger the beforeunload handler
+                timer.setupCloseTabHandlers();
+                window.dispatchEvent(event);
+                
+                console.log('✅ BeforeUnload event simulated');
+            } else {
+                alert('Please start the timer first to simulate beforeunload!');
+            }
+        }
+        
+        function simulateVisibilityChange() {
+            if (timer.timeLeft > 0 && timer.isPaused && timer.wasPausedDueToClose) {
+                console.log('🧪 Simulating visibility change to visible...');
+                
+                // Simulate page becoming visible
+                Object.defineProperty(document, 'hidden', {
+                    writable: true,
+                    value: false
+                });
+                
+                // Trigger visibility change event
+                document.dispatchEvent(new Event('visibilitychange'));
+                
+                console.log('✅ Visibility change to visible simulated');
+            } else {
+                alert('Please start timer, then try to close tab and cancel it first!');
+            }
+        }
+        
+        function simulateFocus() {
+            if (timer.timeLeft > 0 && timer.isPaused && timer.wasPausedDueToClose) {
+                console.log('🧪 Simulating page focus...');
+                
+                // Simulate page focus event
+                window.dispatchEvent(new Event('focus'));
+                
+                console.log('✅ Focus event simulated');
+            } else {
+                alert('Please start timer, then try to close tab and cancel it first!');
+            }
+        }
+        
+        function clearSessionStorage() {
+            timer.clearSessionStorage();
+            alert('Session storage cleared!');
+        }
+        
+        // Update session info periodically
+        setInterval(() => {
+            timer.updateStatus();
+        }, 1000);
+        
+        console.log('🎯 Robust close tab auto-resume timer test loaded!');
+        console.log('📋 Try closing the tab and cancelling to test multiple detection methods.');
+        console.log('💾 Timer will automatically resume using the most reliable detection method.');
+    </script>
+</body>
+</html>

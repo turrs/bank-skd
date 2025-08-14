@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Resume Tryout Button Logic</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        .container {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 30px;
+            border-radius: 15px;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        }
+        .test-section {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        .package-card {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 20px;
+            border-radius: 8px;
+            margin: 15px 0;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        .button {
+            padding: 12px 20px;
+            border: none;
+            border-radius: 6px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: bold;
+            margin: 5px;
+        }
+        .btn-resume {
+            background: linear-gradient(to right, #ff6b35, #f7931e);
+            color: white;
+        }
+        .btn-start {
+            background: linear-gradient(to right, #2196F3, #21CBF3);
+            color: white;
+        }
+        .status-indicator {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            margin-right: 8px;
+        }
+        .status-ongoing {
+            background: #ff6b35;
+            animation: pulse 2s infinite;
+        }
+        .status-completed {
+            background: #4CAF50;
+        }
+        .status-expired {
+            background: #f44336;
+        }
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+        .log-panel {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 15px;
+            border-radius: 8px;
+            margin: 20px 0;
+            max-height: 300px;
+            overflow-y: auto;
+            font-family: monospace;
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧪 Test Resume Tryout Button Logic</h1>
+        
+        <div class="test-section">
+            <h3>📊 Test Data</h3>
+            <p>Testing logika button "Resume Tryout" vs "Mulai Tryout" berdasarkan status tryout session.</p>
+            
+            <h4>📦 Packages Available:</h4>
+            <div id="packagesList"></div>
+            
+            <h4>🔄 Tryout Sessions:</h4>
+            <div id="sessionsList"></div>
+        </div>
+
+        <div class="test-section">
+            <h3>🎯 Package Cards (Simulasi Dashboard)</h3>
+            <div id="packageCards"></div>
+        </div>
+
+        <div class="test-section">
+            <h3>🔍 Debug Log</h3>
+            <div id="debugLog" class="log-panel">
+                <div>System initialized. Ready for testing resume tryout logic.</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Test data - simulasi data dari database
+        const testPackages = [
+            {
+                id: 'pkg-1',
+                title: 'Paket Matematika Dasar',
+                description: 'Soal matematika untuk pemula',
+                duration_minutes: 60,
+                total_questions: 40,
+                requires_payment: false
+            },
+            {
+                id: 'pkg-2',
+                title: 'Paket Bahasa Indonesia',
+                description: 'Soal bahasa Indonesia tingkat lanjut',
+                duration_minutes: 90,
+                total_questions: 50,
+                requires_payment: true
+            },
+            {
+                id: 'pkg-3',
+                title: 'Paket IPA Terpadu',
+                description: 'Soal IPA untuk persiapan ujian',
+                duration_minutes: 120,
+                total_questions: 60,
+                requires_payment: false
+            }
+        ];
+
+        const testSessions = [
+            {
+                id: 'session-1',
+                user_id: 'user-123',
+                package_id: 'pkg-1',
+                status: 'in_progress', // Session yang sedang berlangsung
+                created_at: '2024-01-15T10:00:00Z',
+                start_time: '2024-01-15T10:00:00Z',
+                end_time: null
+            },
+            {
+                id: 'session-2',
+                user_id: 'user-123',
+                package_id: 'pkg-2',
+                status: 'completed', // Session yang sudah selesai
+                created_at: '2024-01-14T09:00:00Z',
+                start_time: '2024-01-14T09:00:00Z',
+                end_time: '2024-01-14T10:30:00Z',
+                total_score: 85
+            },
+            {
+                id: 'session-3',
+                user_id: 'user-123',
+                package_id: 'pkg-3',
+                status: 'expired', // Session yang kadaluarsa
+                created_at: '2024-01-13T08:00:00Z',
+                start_time: '2024-01-13T08:00:00Z',
+                end_time: null
+            }
+        ];
+
+        // Function to check if user has ongoing tryout for a specific package
+        function hasOngoingTryout(packageId, sessions) {
+            log(`🔍 Checking ongoing tryout for package: ${packageId}`);
+            log(`📊 Available sessions: ${JSON.stringify(sessions, null, 2)}`);
+            
+            const ongoingSession = sessions.find(session => {
+                const isMatch = session.package_id === packageId && session.status === 'in_progress';
+                log(`Session ${session.id}: package_id=${session.package_id}, status=${session.status}, isMatch=${isMatch}`);
+                return isMatch;
+            });
+            
+            log(`✅ Found ongoing session: ${ongoingSession ? JSON.stringify(ongoingSession) : 'null'}`);
+            return ongoingSession || null;
+        }
+
+        // Function to get tryout button text and action
+        function getTryoutButtonInfo(packageData, sessions) {
+            const ongoingSession = hasOngoingTryout(packageData.id, sessions);
+            
+            if (ongoingSession) {
+                return {
+                    text: 'Resume Tryout',
+                    action: () => log(`🚀 Navigating to resume tryout: ${packageData.id}`),
+                    variant: 'btn-resume',
+                    icon: '⏰'
+                };
+            } else {
+                return {
+                    text: 'Mulai Tryout',
+                    action: () => log(`🚀 Starting new tryout: ${packageData.id}`),
+                    variant: 'btn-start',
+                    icon: '▶️'
+                };
+            }
+        }
+
+        // Function to render package cards
+        function renderPackageCards() {
+            const container = document.getElementById('packageCards');
+            container.innerHTML = '';
+
+            testPackages.forEach(pkg => {
+                const { text, action, variant, icon } = getTryoutButtonInfo(pkg, testSessions);
+                const ongoingSession = hasOngoingTryout(pkg.id, testSessions);
+                
+                const card = document.createElement('div');
+                card.className = 'package-card';
+                card.innerHTML = `
+                    <h4>${pkg.title}</h4>
+                    <p>${pkg.description}</p>
+                    <p>⏱️ ${pkg.duration_minutes} menit | 📝 ${pkg.total_questions} soal</p>
+                    
+                    ${ongoingSession ? `
+                        <div style="margin: 10px 0; padding: 10px; background: rgba(255, 107, 53, 0.2); border-radius: 5px;">
+                            <span class="status-indicator status-ongoing"></span>
+                            <span style="color: #ff6b35; font-weight: bold;">Tryout sedang berlangsung</span>
+                        </div>
+                    ` : ''}
+                    
+                    <button class="button ${variant}" onclick="this.onclick = ${action.toString()}">
+                        ${icon} ${text}
+                    </button>
+                `;
+                
+                container.appendChild(card);
+            });
+        }
+
+        // Function to render packages list
+        function renderPackagesList() {
+            const container = document.getElementById('packagesList');
+            container.innerHTML = testPackages.map(pkg => 
+                `<div>• ${pkg.title} (ID: ${pkg.id})</div>`
+            ).join('');
+        }
+
+        // Function to render sessions list
+        function renderSessionsList() {
+            const container = document.getElementById('sessionsList');
+            container.innerHTML = testSessions.map(session => {
+                const statusClass = `status-${session.status === 'in_progress' ? 'ongoing' : session.status}`;
+                const statusText = session.status === 'in_progress' ? 'Berlangsung' : 
+                                 session.status === 'completed' ? 'Selesai' : 
+                                 session.status === 'expired' ? 'Kadaluarsa' : session.status;
+                
+                return `
+                    <div style="margin: 5px 0; padding: 10px; background: rgba(255, 255, 255, 0.1); border-radius: 5px;">
+                        <span class="status-indicator ${statusClass}"></span>
+                        <strong>${session.id}</strong> - Package: ${session.package_id} - Status: ${statusText}
+                        ${session.total_score ? ` - Score: ${session.total_score}` : ''}
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // Function to log debug information
+        function log(message) {
+            const logContainer = document.getElementById('debugLog');
+            const logEntry = document.createElement('div');
+            logEntry.style.margin = '5px 0';
+            logEntry.style.padding = '5px';
+            logEntry.style.borderRadius = '3px';
+            logEntry.style.backgroundColor = 'rgba(255, 255, 255, 0.1)';
+            
+            const timestamp = new Date().toLocaleTimeString();
+            logEntry.textContent = `[${timestamp}] ${message}`;
+            
+            logContainer.appendChild(logEntry);
+            logContainer.scrollTop = logContainer.scrollHeight;
+            
+            // Keep only last 20 log entries
+            while (logContainer.children.length > 20) {
+                logContainer.removeChild(logContainer.firstChild);
+            }
+            
+            console.log(message);
+        }
+
+        // Initialize the test
+        document.addEventListener('DOMContentLoaded', () => {
+            log('🚀 Initializing test for resume tryout button logic...');
+            
+            renderPackagesList();
+            renderSessionsList();
+            renderPackageCards();
+            
+            log('✅ Test initialized successfully!');
+            log('📋 Test scenarios:');
+            log('   • Package 1: Should show "Resume Tryout" (has in_progress session)');
+            log('   • Package 2: Should show "Mulai Tryout" (has completed session)');
+            log('   • Package 3: Should show "Mulai Tryout" (has expired session)');
+        });
+
+        console.log('🎯 Resume Tryout Button Logic Test loaded!');
+        console.log('📋 Test the logic for showing Resume vs Start Tryout buttons');
+    </script>
+</body>
+</html>

@@ -1,0 +1,425 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Navigation Cancel Timer Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        .container {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 30px;
+            border-radius: 15px;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        }
+        .timer-display {
+            font-size: 3rem;
+            font-weight: bold;
+            text-align: center;
+            margin: 30px 0;
+            font-family: 'Courier New', monospace;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+        }
+        .controls {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin: 20px 0;
+        }
+        button {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: bold;
+        }
+        .start { background: #4CAF50; color: white; }
+        .pause { background: #FF9800; color: white; }
+        .resume { background: #2196F3; color: white; }
+        .reset { background: #f44336; color: white; }
+        .navigate { background: #9C27B0; color: white; }
+        button:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3); }
+        .status {
+            text-align: center;
+            margin: 20px 0;
+            padding: 15px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+        }
+        .info {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+            font-size: 14px;
+        }
+        .warning {
+            background: rgba(255, 193, 7, 0.2);
+            border: 1px solid rgba(255, 193, 7, 0.5);
+            padding: 15px;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+        .test-section {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧪 Navigation Cancel Timer Test</h1>
+        
+        <div class="warning">
+            <strong>🧪 Test Instructions:</strong>
+            <ul>
+                <li>Start timer and watch it count down</li>
+                <li>Click "Test Navigation" button - this will show a confirmation dialog</li>
+                <li>Click "Cancel" on the dialog - timer should resume automatically</li>
+                <li>Click "OK" on the dialog - timer should stop and navigate</li>
+                <li>Check console for detailed logs</li>
+            </ul>
+        </div>
+
+        <div class="timer-display" id="timer">00:00</div>
+        
+        <div class="controls">
+            <button class="start" onclick="startTimer()">Start</button>
+            <button class="pause" onclick="pauseTimer()">Pause</button>
+            <button class="resume" onclick="resumeTimer()">Resume</button>
+            <button class="reset" onclick="resetTimer()">Reset</button>
+        </div>
+        
+        <div class="test-section">
+            <h3>🧭 Navigation Tests</h3>
+            <div class="controls">
+                <button class="navigate" onclick="testNavigation()">Test Navigation</button>
+                <button class="navigate" onclick="testPopState()">Test PopState</button>
+                <button class="navigate" onclick="testBeforeUnload()">Test BeforeUnload</button>
+            </div>
+        </div>
+        
+        <div class="status" id="status">
+            <strong>Status:</strong> <span id="statusText">Stopped</span><br>
+            <strong>Time Left:</strong> <span id="timeLeft">0</span> seconds<br>
+            <strong>Is Running:</strong> <span id="isRunning">false</span><br>
+            <strong>Is Paused:</strong> <span id="isPaused">false</span><br>
+            <strong>Page Hidden:</strong> <span id="pageHidden">false</span>
+        </div>
+        
+        <div class="info">
+            <h3>🔧 Test Scenarios:</h3>
+            <ul>
+                <li><strong>Test Navigation:</strong> Simulates clicking back button with confirmation</li>
+                <li><strong>Test PopState:</strong> Simulates browser back/forward navigation</li>
+                <li><strong>Test BeforeUnload:</strong> Simulates closing tab/window</li>
+                <li><strong>Auto-resume:</strong> Timer should resume when navigation is cancelled</li>
+            </ul>
+        </div>
+    </div>
+
+    <script>
+        class NavigationTestTimer {
+            constructor(initialTime = 300) { // 5 minutes default
+                this.initialTime = initialTime;
+                this.timeLeft = initialTime;
+                this.isRunning = false;
+                this.isPaused = false;
+                this.pauseStartTime = null;
+                this.totalPausedTime = 0;
+                this.interval = null;
+                this.pausedDueToNavigation = false;
+                
+                this.updateDisplay();
+                this.updateStatus();
+                this.setupNavigationHandlers();
+            }
+            
+            setupNavigationHandlers() {
+                // Handle popstate (browser back/forward)
+                window.addEventListener('popstate', (event) => {
+                    if (this.timeLeft > 0 && this.isRunning && !this.isPaused) {
+                        console.log('🔄 PopState detected - pausing timer');
+                        this.pause();
+                        this.pausedDueToNavigation = true;
+                        
+                        const confirmed = window.confirm('⚠️ Timer sedang berlangsung! Jika Anda meninggalkan halaman ini, timer akan berakhir. Apakah Anda yakin ingin keluar?');
+                        if (!confirmed) {
+                            // Prevent navigation and resume timer
+                            window.history.pushState(null, '', window.location.pathname);
+                            
+                            setTimeout(() => {
+                                if (this.timeLeft > 0) {
+                                    this.resume();
+                                    console.log('▶️ Timer resumed after popstate cancellation');
+                                }
+                            }, 100);
+                        } else {
+                            // User confirmed, stop timer
+                            this.stop();
+                            console.log('⏹️ Timer stopped due to popstate confirmation');
+                        }
+                    }
+                });
+                
+                // Handle beforeunload (closing tab/window)
+                window.addEventListener('beforeunload', (event) => {
+                    if (this.timeLeft > 0 && this.isRunning && !this.isPaused) {
+                        console.log('🚪 BeforeUnload detected - pausing timer');
+                        this.pause();
+                        
+                        const message = '⚠️ Timer sedang berjalan! Apakah Anda yakin ingin keluar?';
+                        event.preventDefault();
+                        event.returnValue = message;
+                        
+                        // Save state to session storage
+                        sessionStorage.setItem('timer_pause_time', Date.now().toString());
+                        sessionStorage.setItem('timer_time_left', this.timeLeft.toString());
+                        sessionStorage.setItem('timer_total_paused', this.totalPausedTime.toString());
+                        
+                        return message;
+                    }
+                });
+                
+                // Push initial state to prevent immediate popstate
+                window.history.pushState(null, '', window.location.pathname);
+                
+                // Restore state from session storage
+                this.restoreFromSessionStorage();
+            }
+            
+            restoreFromSessionStorage() {
+                const savedPauseTime = sessionStorage.getItem('timer_pause_time');
+                const savedTimeLeft = sessionStorage.getItem('timer_time_left');
+                const savedTotalPaused = sessionStorage.getItem('timer_total_paused');
+                
+                if (savedPauseTime && savedTimeLeft && savedTotalPaused) {
+                    const pauseTime = parseInt(savedPauseTime);
+                    const timeLeftWhenPaused = parseInt(savedTimeLeft);
+                    const totalPaused = parseInt(savedTotalPaused);
+                    
+                    // Calculate adjusted time
+                    const pauseDuration = Date.now() - pauseTime;
+                    const adjustedTime = Math.max(0, timeLeftWhenPaused + Math.floor(pauseDuration / 1000));
+                    
+                    this.timeLeft = adjustedTime;
+                    this.totalPausedTime = totalPaused + Math.floor(pauseDuration / 1000);
+                    
+                    // Clear session storage
+                    sessionStorage.removeItem('timer_pause_time');
+                    sessionStorage.removeItem('timer_time_left');
+                    sessionStorage.removeItem('timer_total_paused');
+                    
+                    console.log('🔄 Restored timer state from session storage');
+                    this.updateDisplay();
+                }
+            }
+            
+            start() {
+                if (this.timeLeft > 0 && !this.isRunning) {
+                    this.isRunning = true;
+                    this.isPaused = false;
+                    this.pauseStartTime = null;
+                    this.pausedDueToNavigation = false;
+                    
+                    this.interval = setInterval(() => {
+                        if (this.timeLeft > 0 && !this.isPaused) {
+                            this.timeLeft--;
+                            this.updateDisplay();
+                            
+                            if (this.timeLeft <= 0) {
+                                this.stop();
+                                console.log('⏰ Time is up!');
+                            }
+                        }
+                    }, 1000);
+                    
+                    console.log('🚀 Timer started');
+                    this.updateStatus();
+                }
+            }
+            
+            pause() {
+                if (this.isRunning && !this.isPaused) {
+                    this.isPaused = true;
+                    this.pauseStartTime = Date.now();
+                    
+                    if (this.interval) {
+                        clearInterval(this.interval);
+                        this.interval = null;
+                    }
+                    
+                    console.log('⏸️ Timer paused');
+                    this.updateStatus();
+                }
+            }
+            
+            resume() {
+                if (this.isPaused && this.pauseStartTime) {
+                    const pauseDuration = Date.now() - this.pauseStartTime;
+                    this.totalPausedTime += pauseDuration;
+                    this.isPaused = false;
+                    this.pauseStartTime = null;
+                    
+                    // Restart interval
+                    if (this.timeLeft > 0) {
+                        this.interval = setInterval(() => {
+                            if (this.timeLeft > 0 && !this.isPaused) {
+                                this.timeLeft--;
+                                this.updateDisplay();
+                                
+                                if (this.timeLeft <= 0) {
+                                    this.stop();
+                                    console.log('⏰ Time is up!');
+                                }
+                            }
+                        }, 1000);
+                    }
+                    
+                    console.log('▶️ Timer resumed');
+                    this.updateStatus();
+                }
+            }
+            
+            reset() {
+                this.stop();
+                this.timeLeft = this.initialTime;
+                this.totalPausedTime = 0;
+                this.pausedDueToNavigation = false;
+                this.updateDisplay();
+                this.updateStatus();
+                console.log('🔄 Timer reset');
+            }
+            
+            stop() {
+                this.isRunning = false;
+                this.isPaused = false;
+                this.pauseStartTime = null;
+                
+                if (this.interval) {
+                    clearInterval(this.interval);
+                    this.interval = null;
+                }
+                
+                this.updateStatus();
+            }
+            
+            setTime(seconds) {
+                this.timeLeft = seconds;
+                this.updateDisplay();
+                console.log('⏰ Timer set to:', seconds, 'seconds');
+            }
+            
+            updateDisplay() {
+                const minutes = Math.floor(this.timeLeft / 60);
+                const seconds = this.timeLeft % 60;
+                document.getElementById('timer').textContent = 
+                    `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+            }
+            
+            updateStatus() {
+                document.getElementById('statusText').textContent = 
+                    this.isPaused ? 'Paused' : (this.isRunning ? 'Running' : 'Stopped');
+                document.getElementById('timeLeft').textContent = this.timeLeft;
+                document.getElementById('isRunning').textContent = this.isRunning.toString();
+                document.getElementById('isPaused').textContent = this.isPaused.toString();
+            }
+            
+            updatePageHiddenStatus() {
+                document.getElementById('pageHidden').textContent = document.hidden.toString();
+            }
+        }
+        
+        // Initialize timer
+        const timer = new NavigationTestTimer(300); // 5 minutes
+        
+        // Global functions for buttons
+        function startTimer() {
+            timer.start();
+        }
+        
+        function pauseTimer() {
+            timer.pause();
+        }
+        
+        function resumeTimer() {
+            timer.resume();
+        }
+        
+        function resetTimer() {
+            timer.reset();
+        }
+        
+        // Test navigation functions
+        function testNavigation() {
+            if (timer.timeLeft > 0 && timer.isRunning && !timer.isPaused) {
+                console.log('🧪 Testing navigation cancellation...');
+                timer.pause();
+                timer.pausedDueToNavigation = true;
+                
+                const confirmed = window.confirm('⚠️ Timer sedang berlangsung! Jika Anda meninggalkan halaman ini, timer akan berakhir. Apakah Anda yakin ingin keluar?');
+                if (!confirmed) {
+                    // User cancelled, resume timer
+                    setTimeout(() => {
+                        if (timer.timeLeft > 0) {
+                            timer.resume();
+                            console.log('▶️ Timer resumed after navigation cancellation test');
+                        }
+                    }, 100);
+                } else {
+                    // User confirmed, stop timer
+                    timer.stop();
+                    console.log('⏹️ Timer stopped due to navigation confirmation test');
+                }
+            } else {
+                alert('Please start the timer first to test navigation!');
+            }
+        }
+        
+        function testPopState() {
+            if (timer.timeLeft > 0 && timer.isRunning && !timer.isPaused) {
+                console.log('🧪 Testing popstate...');
+                // Simulate popstate event
+                window.dispatchEvent(new PopStateEvent('popstate'));
+            } else {
+                alert('Please start the timer first to test popstate!');
+            }
+        }
+        
+        function testBeforeUnload() {
+            if (timer.timeLeft > 0 && timer.isRunning && !timer.isPaused) {
+                console.log('🧪 Testing beforeunload...');
+                // Simulate beforeunload event
+                const event = new Event('beforeunload');
+                event.preventDefault = () => {};
+                event.returnValue = 'Test message';
+                window.dispatchEvent(event);
+            } else {
+                alert('Please start the timer first to test beforeunload!');
+            }
+        }
+        
+        // Update page hidden status periodically
+        setInterval(() => {
+            timer.updatePageHiddenStatus();
+        }, 1000);
+        
+        console.log('🎯 Navigation cancel timer test loaded!');
+        console.log('📋 Test the navigation cancellation scenarios above.');
+    </script>
+</body>
+</html>

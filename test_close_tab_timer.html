@@ -1,0 +1,435 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Close Tab Timer Recovery Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        .container {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 30px;
+            border-radius: 15px;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        }
+        .timer-display {
+            font-size: 3rem;
+            font-weight: bold;
+            text-align: center;
+            margin: 30px 0;
+            font-family: 'Courier New', monospace;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+        }
+        .controls {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin: 20px 0;
+        }
+        button {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: bold;
+        }
+        .start { background: #4CAF50; color: white; }
+        .pause { background: #FF9800; color: white; }
+        .resume { background: #2196F3; color: white; }
+        .reset { background: #f44336; color: white; }
+        .test { background: #9C27B0; color: white; }
+        button:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3); }
+        .status {
+            text-align: center;
+            margin: 20px 0;
+            padding: 15px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+        }
+        .info {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+            font-size: 14px;
+        }
+        .warning {
+            background: rgba(255, 193, 7, 0.2);
+            border: 1px solid rgba(255, 193, 7, 0.5);
+            padding: 15px;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+        .test-section {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        .session-info {
+            background: rgba(76, 175, 80, 0.1);
+            border: 1px solid rgba(76, 175, 80, 0.3);
+            padding: 15px;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🚪 Close Tab Timer Recovery Test</h1>
+        
+        <div class="warning">
+            <strong>🧪 Test Instructions:</strong>
+            <ul>
+                <li>Start timer and watch it count down</li>
+                <li>Try to close the tab - you'll see a confirmation dialog</li>
+                <li>Click "Cancel" - timer should continue</li>
+                <li>Click "Leave" - timer state will be saved</li>
+                <li>Reload the page - timer should be restored automatically</li>
+                <li>Check console for detailed logs</li>
+            </ul>
+        </div>
+
+        <div class="timer-display" id="timer">00:00</div>
+        
+        <div class="controls">
+            <button class="start" onclick="startTimer()">Start</button>
+            <button class="pause" onclick="pauseTimer()">Pause</button>
+            <button class="resume" onclick="resumeTimer()">Resume</button>
+            <button class="reset" onclick="resetTimer()">Reset</button>
+        </div>
+        
+        <div class="test-section">
+            <h3>🧪 Close Tab Test</h3>
+            <div class="controls">
+                <button class="test" onclick="testCloseTab()">Test Close Tab</button>
+                <button class="test" onclick="simulateBeforeUnload()">Simulate BeforeUnload</button>
+                <button class="test" onclick="clearSessionStorage()">Clear Session Storage</button>
+            </div>
+        </div>
+        
+        <div class="session-info" id="sessionInfo">
+            <h4>📊 Session Information</h4>
+            <div id="sessionDetails">No active session</div>
+        </div>
+        
+        <div class="status" id="status">
+            <strong>Status:</strong> <span id="statusText">Stopped</span><br>
+            <strong>Time Left:</strong> <span id="timeLeft">0</span> seconds<br>
+            <strong>Is Running:</strong> <span id="isRunning">false</span><br>
+            <strong>Is Paused:</strong> <span id="isPaused">false</span><br>
+            <strong>Session ID:</strong> <span id="sessionId">None</span>
+        </div>
+        
+        <div class="info">
+            <h3>🔧 Close Tab Timer Features:</h3>
+            <ul>
+                <li><strong>BeforeUnload Detection:</strong> Detects when user tries to close tab</li>
+                <li><strong>State Persistence:</strong> Saves timer state to session storage</li>
+                <li><strong>Auto-Recovery:</strong> Restores timer state when page is reloaded</li>
+                <li><strong>Smart Recovery:</strong> Only recovers if same session/package</li>
+                <li><strong>Time Adjustment:</strong> Adjusts remaining time based on pause duration</li>
+            </ul>
+        </div>
+    </div>
+
+    <script>
+        class CloseTabTimer {
+            constructor(initialTime = 300) { // 5 minutes default
+                this.initialTime = initialTime;
+                this.timeLeft = initialTime;
+                this.isRunning = false;
+                this.isPaused = false;
+                this.pauseStartTime = null;
+                this.totalPausedTime = 0;
+                this.interval = null;
+                this.sessionId = 'test-session-' + Date.now();
+                this.packageId = 'test-package-123';
+                
+                this.updateDisplay();
+                this.updateStatus();
+                this.setupCloseTabHandlers();
+                this.restoreFromSessionStorage();
+            }
+            
+            setupCloseTabHandlers() {
+                // Handle beforeunload (closing tab/window)
+                window.addEventListener('beforeunload', (event) => {
+                    if (this.timeLeft > 0 && this.isRunning && !this.isPaused) {
+                        console.log('🚪 BeforeUnload detected - saving timer state');
+                        
+                        // Save timer state to session storage
+                        sessionStorage.setItem('tryout_pause_time', Date.now().toString());
+                        sessionStorage.setItem('tryout_time_left', this.timeLeft.toString());
+                        sessionStorage.setItem('tryout_session_id', this.sessionId);
+                        sessionStorage.setItem('tryout_package_id', this.packageId);
+                        sessionStorage.setItem('tryout_was_paused', 'true');
+                        
+                        const message = '⚠️ Timer sedang berlangsung! Jika Anda meninggalkan halaman ini, timer akan berakhir. Apakah Anda yakin ingin keluar?';
+                        event.preventDefault();
+                        event.returnValue = message;
+                        
+                        console.log('💾 Timer state saved to session storage');
+                        return message;
+                    }
+                });
+                
+                // Handle page visibility change
+                document.addEventListener('visibilitychange', () => {
+                    if (document.hidden) {
+                        console.log('👁️ Page hidden');
+                    } else {
+                        console.log('👁️ Page visible');
+                    }
+                });
+            }
+            
+            restoreFromSessionStorage() {
+                const savedPauseTime = sessionStorage.getItem('tryout_pause_time');
+                const savedTimeLeft = sessionStorage.getItem('tryout_time_left');
+                const savedSessionId = sessionStorage.getItem('tryout_session_id');
+                const savedPackageId = sessionStorage.getItem('tryout_package_id');
+                const wasPaused = sessionStorage.getItem('tryout_was_paused');
+                
+                if (savedPauseTime && savedTimeLeft && savedSessionId && savedPackageId && wasPaused === 'true') {
+                    console.log('🔄 Found saved timer state in session storage');
+                    
+                    // Check if we're on the same package page
+                    if (savedPackageId === this.packageId && savedSessionId === this.sessionId) {
+                        const pauseTime = parseInt(savedPauseTime);
+                        const timeLeftWhenPaused = parseInt(savedTimeLeft);
+                        
+                        // Calculate how long the timer was paused
+                        const pauseDuration = Date.now() - pauseTime;
+                        const adjustedTime = Math.max(0, timeLeftWhenPaused + Math.floor(pauseDuration / 1000));
+                        
+                        if (adjustedTime > 0) {
+                            // Restore timer state
+                            this.timeLeft = adjustedTime;
+                            this.updateDisplay();
+                            console.log('🔄 Timer restored from session storage:', adjustedTime, 'seconds remaining');
+                            
+                            // Clear session storage
+                            this.clearSessionStorage();
+                        } else {
+                            // Time is up, clear storage
+                            this.clearSessionStorage();
+                            console.log('⏰ Timer time is up, clearing session storage');
+                        }
+                    } else {
+                        // Different package or session, clear storage
+                        this.clearSessionStorage();
+                        console.log('🔄 Different package/session, clearing session storage');
+                    }
+                } else {
+                    console.log('ℹ️ No saved timer state found in session storage');
+                }
+            }
+            
+            clearSessionStorage() {
+                sessionStorage.removeItem('tryout_pause_time');
+                sessionStorage.removeItem('tryout_time_left');
+                sessionStorage.removeItem('tryout_session_id');
+                sessionStorage.removeItem('tryout_package_id');
+                sessionStorage.removeItem('tryout_was_paused');
+                console.log('🧹 Session storage cleared');
+            }
+            
+            start() {
+                if (this.timeLeft > 0 && !this.isRunning) {
+                    this.isRunning = true;
+                    this.isPaused = false;
+                    this.pauseStartTime = null;
+                    
+                    this.interval = setInterval(() => {
+                        if (this.timeLeft > 0 && !this.isPaused) {
+                            this.timeLeft--;
+                            this.updateDisplay();
+                            
+                            if (this.timeLeft <= 0) {
+                                this.stop();
+                                console.log('⏰ Time is up!');
+                            }
+                        }
+                    }, 1000);
+                    
+                    console.log('🚀 Timer started');
+                    this.updateStatus();
+                }
+            }
+            
+            pause() {
+                if (this.isRunning && !this.isPaused) {
+                    this.isPaused = true;
+                    this.pauseStartTime = Date.now();
+                    
+                    if (this.interval) {
+                        clearInterval(this.interval);
+                        this.interval = null;
+                    }
+                    
+                    console.log('⏸️ Timer paused');
+                    this.updateStatus();
+                }
+            }
+            
+            resume() {
+                if (this.isPaused && this.pauseStartTime) {
+                    const pauseDuration = Date.now() - this.pauseStartTime;
+                    this.totalPausedTime += pauseDuration;
+                    this.isPaused = false;
+                    this.pauseStartTime = null;
+                    
+                    // Restart interval
+                    if (this.timeLeft > 0) {
+                        this.interval = setInterval(() => {
+                            if (this.timeLeft > 0 && !this.isPaused) {
+                                this.timeLeft--;
+                                this.updateDisplay();
+                                
+                                if (this.timeLeft <= 0) {
+                                    this.stop();
+                                    console.log('⏰ Time is up!');
+                                }
+                            }
+                        }, 1000);
+                    }
+                    
+                    console.log('▶️ Timer resumed');
+                    this.updateStatus();
+                }
+            }
+            
+            reset() {
+                this.stop();
+                this.timeLeft = this.initialTime;
+                this.totalPausedTime = 0;
+                this.updateDisplay();
+                this.updateStatus();
+                console.log('🔄 Timer reset');
+            }
+            
+            stop() {
+                this.isRunning = false;
+                this.isPaused = false;
+                this.pauseStartTime = null;
+                
+                if (this.interval) {
+                    clearInterval(this.interval);
+                    this.interval = null;
+                }
+                
+                this.updateStatus();
+            }
+            
+            setTime(seconds) {
+                this.timeLeft = seconds;
+                this.updateDisplay();
+                console.log('⏰ Timer set to:', seconds, 'seconds');
+            }
+            
+            updateDisplay() {
+                const minutes = Math.floor(this.timeLeft / 60);
+                const seconds = this.timeLeft % 60;
+                document.getElementById('timer').textContent = 
+                    `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+            }
+            
+            updateStatus() {
+                document.getElementById('statusText').textContent = 
+                    this.isPaused ? 'Paused' : (this.isRunning ? 'Running' : 'Stopped');
+                document.getElementById('timeLeft').textContent = this.timeLeft;
+                document.getElementById('isRunning').textContent = this.isRunning.toString();
+                document.getElementById('isPaused').textContent = this.isPaused.toString();
+                document.getElementById('sessionId').textContent = this.sessionId;
+                
+                // Update session info
+                const sessionDetails = document.getElementById('sessionDetails');
+                sessionDetails.innerHTML = `
+                    <strong>Session ID:</strong> ${this.sessionId}<br>
+                    <strong>Package ID:</strong> ${this.packageId}<br>
+                    <strong>Time Left:</strong> ${this.timeLeft} seconds<br>
+                    <strong>Status:</strong> ${this.isPaused ? 'Paused' : (this.isRunning ? 'Running' : 'Stopped')}<br>
+                    <strong>Total Paused:</strong> ${Math.round(this.totalPausedTime / 1000)} seconds
+                `;
+            }
+        }
+        
+        // Initialize timer
+        const timer = new CloseTabTimer(300); // 5 minutes
+        
+        // Global functions for buttons
+        function startTimer() {
+            timer.start();
+        }
+        
+        function pauseTimer() {
+            timer.pause();
+        }
+        
+        function resumeTimer() {
+            timer.resume();
+        }
+        
+        function resetTimer() {
+            timer.reset();
+        }
+        
+        // Test functions
+        function testCloseTab() {
+            if (timer.timeLeft > 0 && timer.isRunning && !timer.isPaused) {
+                console.log('🧪 Testing close tab scenario...');
+                alert('Now try to close this tab. You should see a confirmation dialog. Click "Cancel" to keep the timer running, or "Leave" to save the timer state.');
+            } else {
+                alert('Please start the timer first to test close tab!');
+            }
+        }
+        
+        function simulateBeforeUnload() {
+            if (timer.timeLeft > 0 && timer.isRunning && !timer.isPaused) {
+                console.log('🧪 Simulating beforeunload event...');
+                
+                // Simulate beforeunload event
+                const event = new Event('beforeunload');
+                event.preventDefault = () => {};
+                event.returnValue = 'Test message';
+                
+                // Manually trigger the beforeunload handler
+                timer.setupCloseTabHandlers();
+                window.dispatchEvent(event);
+                
+                console.log('✅ BeforeUnload event simulated');
+            } else {
+                alert('Please start the timer first to simulate beforeunload!');
+            }
+        }
+        
+        function clearSessionStorage() {
+            timer.clearSessionStorage();
+            alert('Session storage cleared!');
+        }
+        
+        // Update session info periodically
+        setInterval(() => {
+            timer.updateStatus();
+        }, 1000);
+        
+        console.log('🎯 Close tab timer recovery test loaded!');
+        console.log('📋 Try closing the tab and then reloading to test timer recovery.');
+        console.log('💾 Timer state will be automatically saved and restored.');
+    </script>
+</body>
+</html>

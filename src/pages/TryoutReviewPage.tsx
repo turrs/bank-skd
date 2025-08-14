@@ -3,8 +3,8 @@ import { useParams, Link } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, CheckCircle, XCircle, Clock } from "lucide-react";
-import { Question, UserAnswer, TryoutSession, QuestionPackage } from "@/entities";
+import { ArrowLeft, CheckCircle, XCircle, Clock, BarChart3, Target, TrendingUp } from "lucide-react";
+import { Question, UserAnswer, TryoutSession, QuestionPackage, QuestionTagStats } from "@/entities";
 
 const TryoutReviewPage = () => {
   const { sessionId } = useParams();
@@ -14,6 +14,8 @@ const TryoutReviewPage = () => {
   const [answersByQuestionId, setAnswersByQuestionId] = useState<Record<string, any>>({});
   const [loading, setLoading] = useState(true);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
+  const [tagStats, setTagStats] = useState<any[]>([]);
+  const [loadingTagStats, setLoadingTagStats] = useState(false);
 
   useEffect(() => {
     const loadData = async () => {
@@ -61,6 +63,29 @@ const TryoutReviewPage = () => {
     
     loadData();
   }, [sessionId]);
+
+  const loadTagStats = async () => {
+    if (!sessionId) return;
+    
+    setLoadingTagStats(true);
+    try {
+      const statsResult = await QuestionTagStats.list();
+      const stats = Array.isArray(statsResult?.data) ? 
+        statsResult.data.filter((s: any) => s.session_id === sessionId) : [];
+      setTagStats(stats);
+    } catch (error) {
+      console.error("Error loading tag stats:", error);
+    } finally {
+      setLoadingTagStats(false);
+    }
+  };
+
+  // Load tag stats when session data is available
+  useEffect(() => {
+    if (session && session.status === 'completed') {
+      loadTagStats();
+    }
+  }, [session]);
 
   if (loading) {
     return (
@@ -134,6 +159,31 @@ const TryoutReviewPage = () => {
       case 'correct': return '✓';
       case 'incorrect': return '✗';
       default: return '○';
+    }
+  };
+
+  const getAccuracyColor = (accuracy: number) => {
+    if (accuracy >= 80) return "text-green-600";
+    if (accuracy >= 60) return "text-yellow-600";
+    return "text-red-600";
+  };
+
+  const formatTime = (seconds: number) => {
+    const minutes = Math.floor(seconds / 60);
+    const remainingSeconds = seconds % 60;
+    return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
+  };
+
+  const getCategoryColor = (mainCategory: string) => {
+    switch (mainCategory) {
+      case 'TWK':
+        return 'bg-blue-100 text-blue-800';
+      case 'TIU':
+        return 'bg-green-100 text-green-800';
+      case 'TKP':
+        return 'bg-purple-100 text-purple-800';
+      default:
+        return 'bg-gray-100 text-gray-800';
     }
   };
 
@@ -504,28 +554,30 @@ const TryoutReviewPage = () => {
                 <CardTitle className="text-sm text-blue-900">Navigasi Soal</CardTitle>
               </CardHeader>
               <CardContent className="p-6">
-                <div className="grid grid-cols-5 gap-2">
-                  {questions.map((question, index) => {
-                    const status = getQuestionStatus(question.id);
-                    return (
-                      <Button
-                        key={index}
-                        size="sm"
-                        variant={
-                          index === currentQuestionIndex ? "default" : "outline"
-                        }
-                        className={`w-8 h-8 p-0 relative ${
-                          index === currentQuestionIndex ? "" : getQuestionStatusColor(status)
-                        }`}
-                        onClick={() => setCurrentQuestionIndex(index)}
-                        title={`Soal ${index + 1} - ${status === 'correct' ? 'Benar' : status === 'incorrect' ? 'Salah' : 'Tidak Dijawab'}`}
-                      >
-                        <span className="text-xs">
-                          {index + 1}
-                        </span>
-                      </Button>
-                    );
-                  })}
+                <div className="max-h-80 overflow-y-auto pr-2" style={{ scrollbarWidth: 'thin', scrollbarColor: '#CBD5E0 #F7FAFC' }}>
+                  <div className="grid grid-cols-5 gap-2">
+                    {questions.map((question, index) => {
+                      const status = getQuestionStatus(question.id);
+                      return (
+                        <Button
+                          key={index}
+                          size="sm"
+                          variant={
+                            index === currentQuestionIndex ? "default" : "outline"
+                          }
+                          className={`w-8 h-8 p-0 relative ${
+                            index === currentQuestionIndex ? "" : getQuestionStatusColor(status)
+                          }`}
+                          onClick={() => setCurrentQuestionIndex(index)}
+                          title={`Soal ${index + 1} - ${status === 'correct' ? 'Benar' : status === 'incorrect' ? 'Salah' : 'Tidak Dijawab'}`}
+                        >
+                          <span className="text-xs">
+                            {index + 1}
+                          </span>
+                        </Button>
+                      );
+                    })}
+                  </div>
                 </div>
                 
                 <div className="mt-4 pt-4 border-t border-blue-100">
@@ -549,6 +601,125 @@ const TryoutReviewPage = () => {
             </Card>
           </div>
         </div>
+
+        {/* Tag Statistics per Kategori Soal - Paling Bawah */}
+        {session.status === 'completed' && (
+          <Card className="mt-8 bg-white/80 backdrop-blur-md border-0 shadow-xl rounded-2xl">
+            <CardHeader className="bg-gradient-to-r from-blue-50 to-indigo-50 border-b border-blue-100 rounded-t-xl">
+              <CardTitle className="text-blue-900 flex items-center">
+                <BarChart3 className="w-5 h-5 mr-2" />
+                Statistik per Kategori Soal
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="p-6">
+              {loadingTagStats ? (
+                <div className="flex items-center justify-center p-8">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+                  <p className="text-blue-700 font-medium ml-3">Loading statistik...</p>
+                </div>
+              ) : tagStats.length === 0 ? (
+                <div className="text-center p-8">
+                  <p className="text-blue-700 font-medium">Tidak ada data statistik per kategori</p>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {tagStats.map((stat) => {
+                    const accuracy = stat.total_questions > 0 
+                      ? Math.round((stat.correct_answers / stat.total_questions) * 100)
+                      : 0;
+                    
+                    return (
+                      <Card key={stat.id} className="border border-blue-200">
+                        <CardHeader className="pb-3">
+                          <div className="flex items-center justify-between">
+                            <div className="flex flex-col space-y-1">
+                              <div className="flex items-center space-x-2">
+                                <Badge className={getCategoryColor(stat.main_category)}>
+                                  {stat.main_category}
+                                </Badge>
+                                <Badge variant="outline">{stat.total_questions} soal</Badge>
+                              </div>
+                              {stat.sub_category && (
+                                <CardTitle className="text-sm text-gray-600">
+                                  {stat.sub_category}
+                                </CardTitle>
+                              )}
+                            </div>
+                          </div>
+                        </CardHeader>
+                        <CardContent className="space-y-4">
+                          {/* Accuracy */}
+                          <div>
+                            <div className="flex justify-between items-center mb-2">
+                              <span className="text-sm text-gray-600">Akurasi</span>
+                              <span className={`font-bold ${getAccuracyColor(accuracy)}`}>
+                                {accuracy}%
+                              </span>
+                            </div>
+                            <div className="w-full bg-gray-200 rounded-full h-2">
+                              <div 
+                                className="bg-blue-600 h-2 rounded-full transition-all duration-300" 
+                                style={{ width: `${accuracy}%` }}
+                              ></div>
+                            </div>
+                          </div>
+
+                          {/* Answer breakdown */}
+                          <div className="grid grid-cols-3 gap-2 text-sm">
+                            <div className="text-center p-2 bg-green-50 rounded">
+                              <div className="font-bold text-green-600">{stat.correct_answers}</div>
+                              <div className="text-gray-600">Benar</div>
+                            </div>
+                            <div className="text-center p-2 bg-red-50 rounded">
+                              <div className="font-bold text-red-600">{stat.wrong_answers}</div>
+                              <div className="text-gray-600">Salah</div>
+                            </div>
+                            <div className="text-center p-2 bg-gray-50 rounded">
+                              <div className="font-bold text-gray-600">{stat.unanswered}</div>
+                              <div className="text-gray-600">Kosong</div>
+                            </div>
+                          </div>
+
+                          {/* Points and time stats */}
+                          <div className="flex justify-between items-center text-sm">
+                            <div className="flex items-center text-gray-600">
+                              <Target className="w-4 h-4 mr-1" />
+                              <span>Total poin:</span>
+                            </div>
+                            <span className="font-medium">
+                              {Number(stat.total_points || 0)}
+                            </span>
+                          </div>
+
+                          {/* Time stats */}
+                          <div className="flex justify-between items-center text-sm">
+                            <div className="flex items-center text-gray-600">
+                              <Clock className="w-4 h-4 mr-1" />
+                              <span>Rata-rata waktu:</span>
+                            </div>
+                            <span className="font-medium">
+                              {formatTime(stat.average_time_seconds)}
+                            </span>
+                          </div>
+
+                          <div className="flex justify-between items-center text-sm">
+                            <div className="flex items-center text-gray-600">
+                              <Target className="w-4 h-4 mr-1" />
+                              <span>Total waktu:</span>
+                            </div>
+                            <span className="font-medium">
+                              {formatTime(stat.total_time_seconds)}
+                            </span>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    );
+                  })}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        )}
       </div>
     </div>
   );

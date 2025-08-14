@@ -1,0 +1,43 @@
+{
+  "name": "TentorAvailability",
+  "table": "tentor_availability",
+  "fields": [
+    {
+      "name": "id",
+      "type": "uuid",
+      "primary": true
+    },
+    {
+      "name": "created_at",
+      "type": "timestamp",
+      "default": "now()"
+    },
+    {
+      "name": "tentor_id",
+      "type": "uuid",
+      "references": "users.id",
+      "description": "ID of the tentor"
+    },
+    {
+      "name": "day_of_week",
+      "type": "integer",
+      "description": "Day of week (0=Sunday, 1=Monday, 2=Tuesday, 3=Wednesday, 4=Thursday, 5=Friday, 6=Saturday)"
+    },
+    {
+      "name": "start_time",
+      "type": "time",
+      "description": "Start time of availability"
+    },
+    {
+      "name": "end_time",
+      "type": "time",
+      "description": "End time of availability"
+    },
+    {
+      "name": "is_available",
+      "type": "boolean",
+      "default": true,
+      "description": "Whether the tentor is available during this time slot"
+    }
+  ]
+}

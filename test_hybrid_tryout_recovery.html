@@ -1,0 +1,699 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hybrid Tryout Recovery Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 50px auto;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        .container {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 30px;
+            border-radius: 15px;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        }
+        .test-section {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        .status-panel {
+            background: rgba(76, 175, 80, 0.1);
+            border: 1px solid rgba(76, 175, 80, 0.3);
+            padding: 15px;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+        .warning-panel {
+            background: rgba(255, 193, 7, 0.1);
+            border: 1px solid rgba(255, 193, 7, 0.3);
+            padding: 15px;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+        .error-panel {
+            background: rgba(244, 67, 54, 0.1);
+            border: 1px solid rgba(244, 67, 54, 0.3);
+            padding: 15px;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+        .storage-layers {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin: 20px 0;
+        }
+        .storage-layer {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        .layer-title {
+            font-weight: bold;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .layer-status {
+            font-size: 0.9rem;
+            margin: 5px 0;
+        }
+        .controls {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin: 20px 0;
+        }
+        .control-btn {
+            padding: 12px 20px;
+            border: none;
+            border-radius: 6px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: bold;
+        }
+        .btn-primary { background: #2196F3; color: white; }
+        .btn-success { background: #4CAF50; color: white; }
+        .btn-warning { background: #FF9800; color: white; }
+        .btn-danger { background: #f44336; color: white; }
+        .btn-info { background: #00BCD4; color: white; }
+        .control-btn:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3); }
+        .timer-display {
+            font-size: 2rem;
+            font-weight: bold;
+            text-align: center;
+            margin: 20px 0;
+            font-family: 'Courier New', monospace;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+        }
+        .progress-bar {
+            width: 100%;
+            height: 20px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 10px;
+            overflow: hidden;
+            margin: 10px 0;
+        }
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #4CAF50, #8BC34A);
+            border-radius: 10px;
+            transition: width 0.3s ease;
+        }
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+        .info-item {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 10px;
+            border-radius: 6px;
+            text-align: center;
+        }
+        .info-value {
+            font-size: 1.2rem;
+            font-weight: bold;
+            margin: 5px 0;
+        }
+        .info-label {
+            font-size: 0.8rem;
+            opacity: 0.8;
+        }
+        .log-panel {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 15px;
+            border-radius: 8px;
+            margin: 20px 0;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        .log-entry {
+            margin: 5px 0;
+            padding: 5px;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 0.9rem;
+        }
+        .log-info { background: rgba(33, 150, 243, 0.2); }
+        .log-success { background: rgba(76, 175, 80, 0.2); }
+        .log-warning { background: rgba(255, 193, 7, 0.2); }
+        .log-error { background: rgba(244, 67, 54, 0.2); }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧪 Hybrid Tryout Recovery Test</h1>
+        
+        <div class="status-panel">
+            <h3>📊 Current Status</h3>
+            <div class="info-grid">
+                <div class="info-item">
+                    <div class="info-value" id="timerDisplay">00:00</div>
+                    <div class="info-label">Time Left</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-value" id="questionIndex">0</div>
+                    <div class="info-label">Current Question</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-value" id="totalPaused">0s</div>
+                    <div class="info-label">Total Paused</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-value" id="connectionStatus">Online</div>
+                    <div class="info-label">Connection</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="test-section">
+            <h3>🎯 Tryout Controls</h3>
+            <div class="controls">
+                <button class="control-btn btn-primary" onclick="startTryout()">Start Tryout</button>
+                <button class="control-btn btn-warning" onclick="pauseTryout()">Pause</button>
+                <button class="control-btn btn-success" onclick="resumeTryout()">Resume</button>
+                <button class="control-btn btn-info" onclick="nextQuestion()">Next Question</button>
+                <button class="control-btn btn-danger" onclick="finishTryout()">Finish Tryout</button>
+            </div>
+        </div>
+
+        <div class="test-section">
+            <h3>🔄 Recovery & Sync Controls</h3>
+            <div class="controls">
+                <button class="control-btn btn-success" onclick="forceSync()">Force Sync</button>
+                <button class="control-btn btn-warning" onclick="simulateOffline()">Simulate Offline</button>
+                <button class="control-btn btn-info" onclick="simulateOnline()">Simulate Online</button>
+                <button class="control-btn btn-danger" onclick="clearAllStorage()">Clear Storage</button>
+                <button class="control-btn btn-primary" onclick="showRecoveryInfo()">Show Recovery Info</button>
+            </div>
+        </div>
+
+        <div class="storage-layers">
+            <div class="storage-layer">
+                <div class="layer-title">💾 LocalStorage</div>
+                <div class="layer-status" id="localStorageStatus">Not initialized</div>
+                <div class="progress-bar">
+                    <div class="progress-fill" id="localStorageProgress" style="width: 0%"></div>
+                </div>
+            </div>
+            
+            <div class="storage-layer">
+                <div class="layer-title">🌐 Server Sync</div>
+                <div class="layer-status" id="serverSyncStatus">Not synced</div>
+                <div class="progress-bar">
+                    <div class="progress-fill" id="serverSyncProgress" style="width: 0%"></div>
+                </div>
+            </div>
+            
+            <div class="storage-layer">
+                <div class="layer-title">📱 Session Storage</div>
+                <div class="layer-status" id="sessionStorageStatus">Not initialized</div>
+                <div class="progress-bar">
+                    <div class="progress-fill" id="sessionStorageProgress" style="width: 0%"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="warning-panel">
+            <h3>⚠️ Simulated Scenarios</h3>
+            <p><strong>Internet Loss:</strong> Click "Simulate Offline" to test offline mode</p>
+            <p><strong>Computer Crash:</strong> Refresh page to test recovery</p>
+            <p><strong>Tab Close:</strong> Close tab and reopen to test session recovery</p>
+            <p><strong>Power Outage:</strong> Clear storage and refresh to test full recovery</p>
+        </div>
+
+        <div class="log-panel">
+            <h3>📝 Activity Log</h3>
+            <div id="logContainer">
+                <div class="log-entry log-info">System initialized. Ready for testing.</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        class HybridTryoutManager {
+            constructor() {
+                this.sessionId = 'test-session-' + Date.now();
+                this.packageId = 'test-package-123';
+                this.initialTimeLeft = 300; // 5 minutes
+                this.state = {
+                    sessionId: this.sessionId,
+                    packageId: this.packageId,
+                    startTime: Date.now(),
+                    totalPausedTime: 0,
+                    pauseStartTime: null,
+                    lastServerSync: Date.now(),
+                    isOnline: navigator.onLine,
+                    currentQuestionIndex: 0,
+                    answers: {},
+                    timeLeft: this.initialTimeLeft
+                };
+                
+                this.syncInterval = null;
+                this.timerInterval = null;
+                this.isRunning = false;
+                this.isPaused = false;
+                
+                this.initialize();
+            }
+            
+            initialize() {
+                this.log('🔄 Initializing hybrid tryout manager...');
+                
+                // Try to recover from localStorage
+                const recoveredState = this.recoverFromLocalStorage();
+                if (recoveredState) {
+                    this.log('✅ Recovered state from localStorage', 'success');
+                    this.state = { ...this.state, ...recoveredState };
+                    this.updateDisplay();
+                }
+                
+                // Try to recover from sessionStorage
+                const sessionState = this.recoverFromSessionStorage();
+                if (sessionState) {
+                    this.log('✅ Recovered state from sessionStorage', 'success');
+                    this.state = { ...this.state, ...sessionState };
+                    this.updateDisplay();
+                }
+                
+                // Setup periodic sync
+                this.setupPeriodicSync();
+                
+                // Setup online/offline detection
+                this.setupConnectionDetection();
+                
+                this.log('🚀 Hybrid tryout manager initialized successfully', 'success');
+                this.updateStorageStatus();
+            }
+            
+            setupPeriodicSync() {
+                if (this.syncInterval) {
+                    clearInterval(this.syncInterval);
+                }
+                
+                this.syncInterval = setInterval(() => {
+                    if (this.state.isOnline && this.isRunning) {
+                        this.syncToServer();
+                    }
+                }, 30000); // Sync every 30 seconds
+                
+                this.log('⏰ Periodic sync setup: every 30 seconds');
+            }
+            
+            setupConnectionDetection() {
+                window.addEventListener('online', () => {
+                    this.state.isOnline = true;
+                    this.log('🌐 Internet connection restored', 'success');
+                    this.updateDisplay();
+                    this.syncToServer();
+                });
+                
+                window.addEventListener('offline', () => {
+                    this.state.isOnline = false;
+                    this.log('📡 Internet connection lost - switching to offline mode', 'warning');
+                    this.updateDisplay();
+                    this.saveToLocalStorage();
+                });
+            }
+            
+            startTryout() {
+                if (this.isRunning) {
+                    this.log('⚠️ Tryout already running', 'warning');
+                    return;
+                }
+                
+                this.isRunning = true;
+                this.isPaused = false;
+                this.state.startTime = Date.now();
+                this.state.timeLeft = this.initialTimeLeft;
+                
+                this.timerInterval = setInterval(() => {
+                    if (!this.isPaused && this.state.timeLeft > 0) {
+                        this.state.timeLeft--;
+                        this.updateDisplay();
+                        
+                        if (this.state.timeLeft <= 0) {
+                            this.finishTryout();
+                        }
+                    }
+                }, 1000);
+                
+                this.log('🚀 Tryout started', 'success');
+                this.saveToAllStorage();
+                this.updateDisplay();
+            }
+            
+            pauseTryout() {
+                if (!this.isRunning || this.isPaused) {
+                    this.log('⚠️ Cannot pause - not running or already paused', 'warning');
+                    return;
+                }
+                
+                this.isPaused = true;
+                this.state.pauseStartTime = Date.now();
+                
+                this.log('⏸️ Tryout paused', 'warning');
+                this.saveToAllStorage();
+                this.updateDisplay();
+            }
+            
+            resumeTryout() {
+                if (!this.isRunning || !this.isPaused) {
+                    this.log('⚠️ Cannot resume - not running or not paused', 'warning');
+                    return;
+                }
+                
+                if (this.state.pauseStartTime) {
+                    const pauseDuration = Date.now() - this.state.pauseStartTime;
+                    this.state.totalPausedTime += pauseDuration;
+                    this.state.pauseStartTime = null;
+                    
+                    this.log(`▶️ Tryout resumed. Paused for ${Math.round(pauseDuration / 1000)}s`, 'success');
+                }
+                
+                this.isPaused = false;
+                this.saveToAllStorage();
+                this.updateDisplay();
+            }
+            
+            nextQuestion() {
+                if (!this.isRunning) {
+                    this.log('⚠️ Cannot navigate - tryout not running', 'warning');
+                    return;
+                }
+                
+                this.state.currentQuestionIndex++;
+                this.state.answers[`question_${this.state.currentQuestionIndex}`] = `answer_${this.state.currentQuestionIndex}`;
+                
+                this.log(`📝 Moved to question ${this.state.currentQuestionIndex}`, 'info');
+                this.saveToAllStorage();
+                this.updateDisplay();
+            }
+            
+            finishTryout() {
+                this.isRunning = false;
+                this.isPaused = false;
+                
+                if (this.timerInterval) {
+                    clearInterval(this.timerInterval);
+                    this.timerInterval = null;
+                }
+                
+                this.log('🏁 Tryout finished', 'success');
+                this.saveToAllStorage();
+                this.syncToServer();
+                this.updateDisplay();
+            }
+            
+            saveToAllStorage() {
+                this.saveToLocalStorage();
+                this.saveToSessionStorage();
+                this.updateStorageStatus();
+            }
+            
+            saveToLocalStorage() {
+                try {
+                    const dataToSave = {
+                        ...this.state,
+                        lastSaved: Date.now(),
+                        isRunning: this.isRunning,
+                        isPaused: this.isPaused
+                    };
+                    
+                    localStorage.setItem(`tryout_state_${this.sessionId}`, JSON.stringify(dataToSave));
+                    this.log('💾 Saved to localStorage');
+                } catch (error) {
+                    this.log('❌ Failed to save to localStorage: ' + error.message, 'error');
+                }
+            }
+            
+            saveToSessionStorage() {
+                try {
+                    const dataToSave = {
+                        ...this.state,
+                        lastSaved: Date.now(),
+                        isRunning: this.isRunning,
+                        isPaused: this.isPaused
+                    };
+                    
+                    sessionStorage.setItem(`tryout_session_${this.sessionId}`, JSON.stringify(dataToSave));
+                    this.log('💾 Saved to sessionStorage');
+                } catch (error) {
+                    this.log('❌ Failed to save to sessionStorage: ' + error.message, 'error');
+                }
+            }
+            
+            recoverFromLocalStorage() {
+                try {
+                    const saved = localStorage.getItem(`tryout_state_${this.sessionId}`);
+                    if (saved) {
+                        const data = JSON.parse(saved);
+                        
+                        // Check if data is recent (within last 24 hours)
+                        const isRecent = Date.now() - data.lastSaved < 24 * 60 * 60 * 1000;
+                        if (isRecent) {
+                            return data;
+                        } else {
+                            this.log('⚠️ LocalStorage data is too old, clearing', 'warning');
+                            localStorage.removeItem(`tryout_state_${this.sessionId}`);
+                        }
+                    }
+                } catch (error) {
+                    this.log('❌ Failed to read from localStorage: ' + error.message, 'error');
+                }
+                return null;
+            }
+            
+            recoverFromSessionStorage() {
+                try {
+                    const saved = sessionStorage.getItem(`tryout_session_${this.sessionId}`);
+                    if (saved) {
+                        const data = JSON.parse(saved);
+                        return data;
+                    }
+                } catch (error) {
+                    this.log('❌ Failed to read from sessionStorage: ' + error.message, 'error');
+                }
+                return null;
+            }
+            
+            syncToServer() {
+                if (!this.state.isOnline) {
+                    this.log('📡 Cannot sync - offline', 'warning');
+                    return;
+                }
+                
+                // Simulate server sync
+                setTimeout(() => {
+                    this.state.lastServerSync = Date.now();
+                    this.log('✅ Synced to server (simulated)', 'success');
+                    this.updateDisplay();
+                    this.updateStorageStatus();
+                }, 1000);
+            }
+            
+            forceSync() {
+                this.log('🔄 Force syncing to server...', 'info');
+                this.syncToServer();
+            }
+            
+            simulateOffline() {
+                this.state.isOnline = false;
+                this.log('📡 Simulated offline mode', 'warning');
+                this.updateDisplay();
+            }
+            
+            simulateOnline() {
+                this.state.isOnline = true;
+                this.log('🌐 Simulated online mode', 'success');
+                this.updateDisplay();
+                this.syncToServer();
+            }
+            
+            clearAllStorage() {
+                try {
+                    localStorage.removeItem(`tryout_state_${this.sessionId}`);
+                    sessionStorage.removeItem(`tryout_session_${this.sessionId}`);
+                    this.log('🧹 All storage cleared', 'warning');
+                    this.updateStorageStatus();
+                } catch (error) {
+                    this.log('❌ Failed to clear storage: ' + error.message, 'error');
+                }
+            }
+            
+            showRecoveryInfo() {
+                const info = {
+                    sessionId: this.state.sessionId,
+                    lastSync: new Date(this.state.lastServerSync).toLocaleString(),
+                    totalPausedTime: Math.round(this.state.totalPausedTime / 1000),
+                    isOnline: this.state.isOnline,
+                    hasLocalBackup: !!localStorage.getItem(`tryout_state_${this.sessionId}`),
+                    hasSessionBackup: !!sessionStorage.getItem(`tryout_session_${this.sessionId}`)
+                };
+                
+                this.log('📊 Recovery Info: ' + JSON.stringify(info, null, 2), 'info');
+                console.log('Recovery Info:', info);
+            }
+            
+            updateDisplay() {
+                // Update timer display
+                const minutes = Math.floor(this.state.timeLeft / 60);
+                const seconds = this.state.timeLeft % 60;
+                document.getElementById('timerDisplay').textContent = 
+                    `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+                
+                // Update question index
+                document.getElementById('questionIndex').textContent = this.state.currentQuestionIndex;
+                
+                // Update total paused time
+                document.getElementById('totalPaused').textContent = Math.round(this.state.totalPausedTime / 1000) + 's';
+                
+                // Update connection status
+                const statusElement = document.getElementById('connectionStatus');
+                statusElement.textContent = this.state.isOnline ? 'Online' : 'Offline';
+                statusElement.style.color = this.state.isOnline ? '#4CAF50' : '#FF9800';
+            }
+            
+            updateStorageStatus() {
+                // LocalStorage status
+                try {
+                    const localData = localStorage.getItem(`tryout_state_${this.sessionId}`);
+                    const localStatus = document.getElementById('localStorageStatus');
+                    const localProgress = document.getElementById('localStorageProgress');
+                    
+                    if (localData) {
+                        const data = JSON.parse(localData);
+                        const timeSinceSave = Date.now() - data.lastSaved;
+                        localStatus.textContent = `Last saved: ${Math.round(timeSinceSave / 1000)}s ago`;
+                        localProgress.style.width = '100%';
+                    } else {
+                        localStatus.textContent = 'No data';
+                        localProgress.style.width = '0%';
+                    }
+                } catch (error) {
+                    document.getElementById('localStorageStatus').textContent = 'Error';
+                }
+                
+                // Server sync status
+                const serverStatus = document.getElementById('serverSyncStatus');
+                const serverProgress = document.getElementById('serverSyncProgress');
+                const timeSinceSync = Date.now() - this.state.lastServerSync;
+                
+                if (this.state.isOnline) {
+                    serverStatus.textContent = `Last sync: ${Math.round(timeSinceSync / 1000)}s ago`;
+                    serverProgress.style.width = '100%';
+                } else {
+                    serverStatus.textContent = 'Offline - cannot sync';
+                    serverProgress.style.width = '50%';
+                }
+                
+                // Session storage status
+                try {
+                    const sessionData = sessionStorage.getItem(`tryout_session_${this.sessionId}`);
+                    const sessionStatus = document.getElementById('sessionStorageStatus');
+                    const sessionProgress = document.getElementById('sessionStorageProgress');
+                    
+                    if (sessionData) {
+                        const data = JSON.parse(sessionData);
+                        const timeSinceSave = Date.now() - data.lastSaved;
+                        sessionStatus.textContent = `Last saved: ${Math.round(timeSinceSave / 1000)}s ago`;
+                        sessionProgress.style.width = '100%';
+                    } else {
+                        sessionStatus.textContent = 'No data';
+                        sessionProgress.style.width = '0%';
+                    }
+                } catch (error) {
+                    document.getElementById('sessionStorageStatus').textContent = 'Error';
+                }
+            }
+            
+            log(message, type = 'info') {
+                const logContainer = document.getElementById('logContainer');
+                const logEntry = document.createElement('div');
+                logEntry.className = `log-entry log-${type}`;
+                
+                const timestamp = new Date().toLocaleTimeString();
+                logEntry.textContent = `[${timestamp}] ${message}`;
+                
+                logContainer.appendChild(logEntry);
+                logContainer.scrollTop = logContainer.scrollHeight;
+                
+                // Keep only last 50 log entries
+                while (logContainer.children.length > 50) {
+                    logContainer.removeChild(logContainer.firstChild);
+                }
+                
+                console.log(`[${type.toUpperCase()}] ${message}`);
+            }
+        }
+        
+        // Initialize manager
+        let tryoutManager;
+        
+        document.addEventListener('DOMContentLoaded', () => {
+            tryoutManager = new HybridTryoutManager();
+        });
+        
+        // Global functions for buttons
+        function startTryout() {
+            if (tryoutManager) tryoutManager.startTryout();
+        }
+        
+        function pauseTryout() {
+            if (tryoutManager) tryoutManager.pauseTryout();
+        }
+        
+        function resumeTryout() {
+            if (tryoutManager) tryoutManager.resumeTryout();
+        }
+        
+        function nextQuestion() {
+            if (tryoutManager) tryoutManager.nextQuestion();
+        }
+        
+        function finishTryout() {
+            if (tryoutManager) tryoutManager.finishTryout();
+        }
+        
+        function forceSync() {
+            if (tryoutManager) tryoutManager.forceSync();
+        }
+        
+        function simulateOffline() {
+            if (tryoutManager) tryoutManager.simulateOffline();
+        }
+        
+        function simulateOnline() {
+            if (tryoutManager) tryoutManager.simulateOnline();
+        }
+        
+        function clearAllStorage() {
+            if (tryoutManager) tryoutManager.clearAllStorage();
+        }
+        
+        function showRecoveryInfo() {
+            if (tryoutManager) tryoutManager.showRecoveryInfo();
+        }
+        
+        console.log('🎯 Hybrid Tryout Recovery Test loaded!');
+        console.log('📋 Test different scenarios: offline, refresh, storage clear');
+    </script>
+</body>
+</html>

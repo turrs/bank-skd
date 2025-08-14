@@ -1,0 +1,454 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test History Lazy Loading Optimization</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1000px;
+            margin: 50px auto;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        .container {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 30px;
+            border-radius: 15px;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        }
+        .test-section {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        .performance-panel {
+            background: rgba(76, 175, 80, 0.1);
+            border: 1px solid rgba(76, 175, 80, 0.3);
+            padding: 15px;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+        .controls {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin: 20px 0;
+        }
+        .control-btn {
+            padding: 12px 20px;
+            border: none;
+            border-radius: 6px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: bold;
+        }
+        .btn-primary { background: #2196F3; color: white; }
+        .btn-success { background: #4CAF50; color: white; }
+        .btn-warning { background: #FF9800; color: white; }
+        .btn-danger { background: #f44336; color: white; }
+        .control-btn:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3); }
+        .control-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+        .log-panel {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 15px;
+            border-radius: 8px;
+            margin: 20px 0;
+            max-height: 400px;
+            overflow-y: auto;
+            font-family: monospace;
+            font-size: 12px;
+        }
+        .log-entry {
+            margin: 5px 0;
+            padding: 8px;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 0.9rem;
+        }
+        .log-info { background: rgba(33, 150, 243, 0.2); }
+        .log-success { background: rgba(76, 175, 80, 0.2); }
+        .log-warning { background: rgba(255, 193, 7, 0.2); }
+        .log-error { background: rgba(244, 67, 54, 0.2); }
+        .session-list {
+            background: rgba(156, 39, 176, 0.1);
+            border: 1px solid rgba(156, 39, 176, 0.3);
+            padding: 15px;
+            border-radius: 8px;
+            margin: 20px 0;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        .session-item {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 10px;
+            margin: 5px 0;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .session-item:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: translateX(5px);
+        }
+        .session-item.selected {
+            background: rgba(33, 150, 243, 0.3);
+            border-left: 4px solid #2196F3;
+        }
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+        .metric-card {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        .metric-value {
+            font-size: 2rem;
+            font-weight: bold;
+            margin: 10px 0;
+        }
+        .metric-label {
+            font-size: 0.9rem;
+            opacity: 0.8;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🚀 Test History Lazy Loading Optimization</h1>
+        
+        <div class="test-section">
+            <h3>📋 Test Overview</h3>
+            <p>Test optimasi lazy loading untuk halaman history yang akan memuat data secara bertahap untuk meningkatkan performa.</p>
+        </div>
+
+        <div class="performance-panel">
+            <h3>📊 Performance Metrics</h3>
+            <div class="metrics-grid">
+                <div class="metric-card">
+                    <div class="metric-value" id="initialLoadTime">0ms</div>
+                    <div class="metric-label">Initial Load Time</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value" id="totalDataLoaded">0KB</div>
+                    <div class="metric-label">Total Data Loaded</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value" id="apiCalls">0</div>
+                    <div class="metric-label">API Calls Made</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value" id="lazyLoads">0</div>
+                    <div class="metric-label">Lazy Loads</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="test-section">
+            <h3>🎯 Test Controls</h3>
+            <div class="controls">
+                <button class="control-btn btn-primary" onclick="simulateInitialLoad()">Simulate Initial Load</button>
+                <button class="control-btn btn-success" onclick="simulateSelectSession()">Select Session (Lazy Load)</button>
+                <button class="control-btn btn-warning" onclick="simulateOpenStatistics()">Open Statistics Tab</button>
+                <button class="control-btn btn-danger" onclick="resetTest()">Reset Test</button>
+            </div>
+        </div>
+
+        <div class="session-list">
+            <h3>📅 Session List (Basic Data Only)</h3>
+            <div id="sessionList">
+                <p class="text-center text-gray-400">Click "Simulate Initial Load" to see sessions</p>
+            </div>
+        </div>
+
+        <div class="test-section">
+            <h3>🔍 Selected Session Details</h3>
+            <div id="sessionDetails">
+                <p class="text-center text-gray-400">Select a session to see details (lazy loaded)</p>
+            </div>
+        </div>
+
+        <div class="log-panel">
+            <h3>📝 Performance Log</h3>
+            <div id="logContainer">
+                <div class="log-entry log-info">System initialized. Ready for testing lazy loading optimization.</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        class HistoryLazyLoadingTest {
+            constructor() {
+                this.startTime = Date.now();
+                this.metrics = {
+                    initialLoadTime: 0,
+                    totalDataLoaded: 0,
+                    apiCalls: 0,
+                    lazyLoads: 0
+                };
+                
+                this.sessions = [];
+                this.selectedSession = null;
+                this.sessionDetails = {};
+                
+                this.initialize();
+            }
+            
+            initialize() {
+                this.log('🚀 Initializing history lazy loading test...');
+                this.log('📋 Test scenarios:');
+                this.log('   • Initial load: Basic session list + package titles only');
+                this.log('   • Lazy load: Session details when selected');
+                this.log('   • Lazy load: Statistics when tab opened');
+                this.log('   • Performance monitoring and metrics');
+            }
+            
+            async simulateInitialLoad() {
+                const loadStart = Date.now();
+                this.log('🔄 Simulating initial load (basic data only)...');
+                
+                // Simulate loading basic session list
+                await this.delay(500);
+                this.sessions = this.generateMockSessions(20);
+                this.renderSessionList();
+                
+                // Simulate loading basic package info
+                await this.delay(300);
+                this.log('📦 Loading basic package info (title only)...');
+                
+                // Simulate API calls
+                this.metrics.apiCalls += 2; // TryoutSession.list() + QuestionPackage.get() for each
+                this.metrics.totalDataLoaded += 15; // Basic session data
+                this.metrics.totalDataLoaded += 8; // Basic package data
+                
+                const loadEnd = Date.now();
+                this.metrics.initialLoadTime = loadEnd - loadStart;
+                
+                this.log('✅ Initial load completed in', this.metrics.initialLoadTime + 'ms', 'success');
+                this.log('📊 Data loaded:', this.metrics.totalDataLoaded + 'KB');
+                this.log('🔌 API calls made:', this.metrics.apiCalls);
+                
+                this.updateMetrics();
+            }
+            
+            async simulateSelectSession() {
+                if (this.sessions.length === 0) {
+                    this.log('⚠️ Please load sessions first', 'warning');
+                    return;
+                }
+                
+                const session = this.sessions[Math.floor(Math.random() * this.sessions.length)];
+                this.log('🔍 Selecting session:', session.id, 'for lazy loading...');
+                
+                this.selectedSession = session;
+                this.renderSessionList();
+                
+                // Simulate lazy loading session details
+                await this.delay(400);
+                this.log('📊 Loading session details (tag points, stats)...');
+                
+                this.metrics.apiCalls += 1; // QuestionTagStats.list()
+                this.metrics.totalDataLoaded += 5; // Session details
+                this.metrics.lazyLoads += 1;
+                
+                this.sessionDetails[session.id] = {
+                    tagPoints: { TWK: 25, TIU: 30, TKP: 20, 'Non Tag': 15 },
+                    questionStats: { correct: 18, wrong: 12, unanswered: 10 }
+                };
+                
+                this.log('✅ Session details loaded successfully', 'success');
+                this.renderSessionDetails();
+                this.updateMetrics();
+            }
+            
+            async simulateOpenStatistics() {
+                this.log('📊 Opening statistics tab (lazy loading user stats)...');
+                
+                // Simulate lazy loading user statistics
+                await this.delay(600);
+                this.log('📈 Loading user statistics (all sessions analysis)...');
+                
+                this.metrics.apiCalls += 1; // QuestionTagStats.list() for user
+                this.metrics.totalDataLoaded += 12; // User statistics
+                this.metrics.lazyLoads += 1;
+                
+                this.log('✅ User statistics loaded successfully', 'success');
+                this.updateMetrics();
+            }
+            
+            generateMockSessions(count) {
+                const sessions = [];
+                for (let i = 0; i < count; i++) {
+                    sessions.push({
+                        id: `session-${i + 1}`,
+                        package_id: `package-${Math.floor(Math.random() * 5) + 1}`,
+                        status: Math.random() > 0.3 ? 'completed' : 'in_progress',
+                        created_at: new Date(Date.now() - Math.random() * 30 * 24 * 60 * 60 * 1000).toISOString(),
+                        total_score: Math.floor(Math.random() * 100) + 50,
+                        correct_answers: Math.floor(Math.random() * 20) + 10,
+                        wrong_answers: Math.floor(Math.random() * 15) + 5,
+                        unanswered: Math.floor(Math.random() * 10)
+                    });
+                }
+                return sessions;
+            }
+            
+            renderSessionList() {
+                const container = document.getElementById('sessionList');
+                container.innerHTML = '';
+                
+                this.sessions.forEach((session, index) => {
+                    const item = document.createElement('div');
+                    item.className = `session-item ${this.selectedSession?.id === session.id ? 'selected' : ''}`;
+                    item.innerHTML = `
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <div>
+                                <strong>#${index + 1}</strong> - Package ${session.package_id}
+                                <br>
+                                <small>${new Date(session.created_at).toLocaleDateString()}</small>
+                            </div>
+                            <div style="text-align: right;">
+                                <span style="color: ${session.status === 'completed' ? '#4CAF50' : '#FF9800'}">
+                                    ${session.status === 'completed' ? '✅' : '⏳'}
+                                </span>
+                                <br>
+                                <small>${session.status}</small>
+                            </div>
+                        </div>
+                    `;
+                    
+                    item.onclick = () => this.selectSession(session);
+                    container.appendChild(item);
+                });
+            }
+            
+            selectSession(session) {
+                this.selectedSession = session;
+                this.renderSessionList();
+                this.renderSessionDetails();
+            }
+            
+            renderSessionDetails() {
+                const container = document.getElementById('sessionDetails');
+                
+                if (!this.selectedSession) {
+                    container.innerHTML = '<p class="text-center text-gray-400">Select a session to see details</p>';
+                    return;
+                }
+                
+                const details = this.sessionDetails[this.selectedSession.id];
+                
+                container.innerHTML = `
+                    <div style="background: rgba(255, 255, 255, 0.1); padding: 20px; border-radius: 8px;">
+                        <h4>${this.selectedSession.id}</h4>
+                        <p>Status: ${this.selectedSession.status}</p>
+                        <p>Score: ${this.selectedSession.total_score}</p>
+                        <p>Correct: ${this.selectedSession.correct_answers}</p>
+                        <p>Wrong: ${this.selectedSession.wrong_answers}</p>
+                        <p>Unanswered: ${this.selectedSession.unanswered}</p>
+                        
+                        ${details ? `
+                            <hr style="margin: 20px 0; border-color: rgba(255, 255, 255, 0.2);">
+                            <h5>Lazy Loaded Details:</h5>
+                            <p>Tag Points: TWK(${details.tagPoints.TWK}) TIU(${details.tagPoints.TIU}) TKP(${details.tagPoints.TKP})</p>
+                            <p>Question Stats: ${details.questionStats.correct} correct, ${details.questionStats.wrong} wrong</p>
+                        ` : `
+                            <hr style="margin: 20px 0; border-color: rgba(255, 255, 255, 0.2);">
+                            <p style="color: #FF9800;">Click "Select Session" to lazy load details</p>
+                        `}
+                    </div>
+                `;
+            }
+            
+            updateMetrics() {
+                document.getElementById('initialLoadTime').textContent = this.metrics.initialLoadTime + 'ms';
+                document.getElementById('totalDataLoaded').textContent = this.metrics.totalDataLoaded + 'KB';
+                document.getElementById('apiCalls').textContent = this.metrics.apiCalls;
+                document.getElementById('lazyLoads').textContent = this.metrics.lazyLoads;
+            }
+            
+            resetTest() {
+                this.log('🔄 Resetting test...', 'warning');
+                this.metrics = {
+                    initialLoadTime: 0,
+                    totalDataLoaded: 0,
+                    apiCalls: 0,
+                    lazyLoads: 0
+                };
+                this.sessions = [];
+                this.selectedSession = null;
+                this.sessionDetails = {};
+                
+                document.getElementById('sessionList').innerHTML = '<p class="text-center text-gray-400">Click "Simulate Initial Load" to see sessions</p>';
+                document.getElementById('sessionDetails').innerHTML = '<p class="text-center text-gray-400">Select a session to see details (lazy loaded)</p>';
+                
+                this.updateMetrics();
+                this.log('✅ Test reset completed');
+            }
+            
+            delay(ms) {
+                return new Promise(resolve => setTimeout(resolve, ms));
+            }
+            
+            log(message, type = 'info') {
+                const logContainer = document.getElementById('logContainer');
+                const logEntry = document.createElement('div');
+                logEntry.className = `log-entry log-${type}`;
+                
+                const timestamp = new Date().toLocaleTimeString();
+                logEntry.textContent = `[${timestamp}] ${message}`;
+                
+                logContainer.appendChild(logEntry);
+                logContainer.scrollTop = logContainer.scrollHeight;
+                
+                // Keep only last 30 log entries
+                while (logContainer.children.length > 30) {
+                    logContainer.removeChild(logContainer.firstChild);
+                }
+                
+                console.log(`[${type.toUpperCase()}] ${message}`);
+            }
+        }
+        
+        // Initialize test
+        let historyTest;
+        
+        document.addEventListener('DOMContentLoaded', () => {
+            historyTest = new HistoryLazyLoadingTest();
+        });
+        
+        // Global functions for buttons
+        function simulateInitialLoad() {
+            if (historyTest) historyTest.simulateInitialLoad();
+        }
+        
+        function simulateSelectSession() {
+            if (historyTest) historyTest.simulateSelectSession();
+        }
+        
+        function simulateOpenStatistics() {
+            if (historyTest) historyTest.simulateOpenStatistics();
+        }
+        
+        function resetTest() {
+            if (historyTest) historyTest.resetTest();
+        }
+        
+        console.log('🚀 History Lazy Loading Test loaded!');
+        console.log('📋 Test lazy loading optimization for better performance');
+    </script>
+</body>
+</html>

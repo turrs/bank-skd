@@ -65,6 +65,30 @@ export const UserPackageAccess = {
   delete: (id: string) => apiClient.delete('user_package_access', { column: 'id', value: id })
 };
 
+export const TentorProfile = {
+  list: () => apiClient.list('tentor_profiles'),
+  get: (id: string) => apiClient.get('tentor_profiles', id),
+  create: (data: any) => apiClient.insert('tentor_profiles', data),
+  update: (id: string, data: any) => apiClient.update('tentor_profiles', data, { column: 'id', value: id }),
+  delete: (id: string) => apiClient.delete('tentor_profiles', { column: 'id', value: id })
+};
+
+export const TentorSession = {
+  list: () => apiClient.list('tentor_sessions'),
+  get: (id: string) => apiClient.get('tentor_sessions', id),
+  create: (data: any) => apiClient.insert('tentor_sessions', data),
+  update: (id: string, data: any) => apiClient.update('tentor_sessions', data, { column: 'id', value: id }),
+  delete: (id: string) => apiClient.delete('tentor_sessions', { column: 'id', value: id })
+};
+
+export const TentorAvailability = {
+  list: () => apiClient.list('tentor_availability'),
+  get: (id: string) => apiClient.get('tentor_availability', id),
+  create: (data: any) => apiClient.insert('tentor_availability', data),
+  update: (id: string, data: any) => apiClient.update('tentor_availability', data, { column: 'id', value: id }),
+  delete: (id: string) => apiClient.delete('tentor_availability', { column: 'id', value: id })
+};
+
 export const User = {
   get: () => apiClient.getUser(),
   getSession: () => apiClient.getSession(),

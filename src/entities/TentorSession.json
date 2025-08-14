@@ -1,0 +1,89 @@
+{
+  "name": "TentorSession",
+  "table": "tentor_sessions",
+  "fields": [
+    {
+      "name": "id",
+      "type": "uuid",
+      "primary": true
+    },
+    {
+      "name": "created_at",
+      "type": "timestamp",
+      "default": "now()"
+    },
+    {
+      "name": "updated_at",
+      "type": "timestamp",
+      "default": "now()"
+    },
+    {
+      "name": "tentor_id",
+      "type": "uuid",
+      "references": "users.id",
+      "description": "ID of the tentor conducting the session"
+    },
+    {
+      "name": "student_id",
+      "type": "uuid",
+      "references": "users.id",
+      "description": "ID of the student attending the session"
+    },
+    {
+      "name": "package_id",
+      "type": "uuid",
+      "references": "question_packages.id",
+      "nullable": true,
+      "description": "ID of the question package being reviewed"
+    },
+    {
+      "name": "session_type",
+      "type": "varchar",
+      "description": "Type of session (consultation, review, practice, assessment)"
+    },
+    {
+      "name": "session_date",
+      "type": "timestamp",
+      "description": "Date and time of the session"
+    },
+    {
+      "name": "duration_minutes",
+      "type": "integer",
+      "default": 60,
+      "description": "Duration of session in minutes"
+    },
+    {
+      "name": "status",
+      "type": "varchar",
+      "default": "scheduled",
+      "description": "Session status (scheduled, in_progress, completed, cancelled)"
+    },
+    {
+      "name": "notes",
+      "type": "text",
+      "description": "Session notes from tentor"
+    },
+    {
+      "name": "student_feedback",
+      "type": "text",
+      "description": "Feedback from student"
+    },
+    {
+      "name": "rating",
+      "type": "integer",
+      "description": "Student rating (1-5 stars)"
+    },
+    {
+      "name": "amount",
+      "type": "integer",
+      "default": 0,
+      "description": "Session cost in IDR"
+    },
+    {
+      "name": "payment_status",
+      "type": "varchar",
+      "default": "pending",
+      "description": "Payment status (pending, paid, refunded)"
+    }
+  ]
+}

@@ -1,0 +1,526 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test History Statistics Fix</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 50px auto;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        .container {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 30px;
+            border-radius: 15px;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        }
+        .test-section {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        .demo-panel {
+            background: rgba(76, 175, 80, 0.1);
+            border: 1px solid rgba(76, 175, 80, 0.3);
+            padding: 15px;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+        .controls {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin: 20px 0;
+        }
+        .control-btn {
+            padding: 12px 20px;
+            border: none;
+            border-radius: 6px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: bold;
+        }
+        .btn-primary { background: #2196F3; color: white; }
+        .btn-success { background: #4CAF50; color: white; }
+        .btn-warning { background: #FF9800; color: white; }
+        .btn-danger { background: #f44336; color: white; }
+        .control-btn:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3); }
+        .control-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+        .log-panel {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 15px;
+            border-radius: 8px;
+            margin: 20px 0;
+            max-height: 300px;
+            overflow-y: auto;
+            font-family: monospace;
+            font-size: 12px;
+        }
+        .log-entry {
+            margin: 5px 0;
+            padding: 8px;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 0.9rem;
+        }
+        .log-info { background: rgba(33, 150, 243, 0.2); }
+        .log-success { background: rgba(76, 175, 80, 0.2); }
+        .log-warning { background: rgba(255, 193, 7, 0.2); }
+        .log-error { background: rgba(244, 67, 54, 0.2); }
+        .tab-container {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        .tab-list {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        .tab-trigger {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 6px;
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .tab-trigger.active {
+            background: #2196F3;
+            color: white;
+        }
+        .tab-trigger:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+        .tab-content {
+            min-height: 200px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            width: 100%;
+        }
+        .stat-card {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        .stat-value {
+            font-size: 2rem;
+            font-weight: bold;
+            margin: 10px 0;
+        }
+        .stat-label {
+            font-size: 0.9rem;
+            opacity: 0.8;
+        }
+        .loading-spinner {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 15px;
+        }
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 4px solid rgba(255, 255, 255, 0.3);
+            border-top: 4px solid white;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+        .metric-card {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        .metric-value {
+            font-size: 2rem;
+            font-weight: bold;
+            margin: 10px 0;
+        }
+        .metric-label {
+            font-size: 0.9rem;
+            opacity: 0.8;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔧 Test History Statistics Fix</h1>
+        
+        <div class="test-section">
+            <h3>📋 Test Overview</h3>
+            <p>Test perbaikan tab statistik di halaman history yang sebelumnya stuck loading</p>
+        </div>
+
+        <div class="demo-panel">
+            <h3>📊 Demo Configuration</h3>
+            <div class="metrics-grid">
+                <div class="metric-card">
+                    <div class="metric-value" id="totalSessions">0</div>
+                    <div class="metric-label">Total Sessions</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value" id="completedSessions">0</div>
+                    <div class="metric-label">Completed Sessions</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value" id="questionTagStats">0</div>
+                    <div class="metric-label">Question Tag Stats</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value" id="loadingState">false</div>
+                    <div class="metric-label">Loading State</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="test-section">
+            <h3>🎯 Test Controls</h3>
+            <div class="controls">
+                <button class="control-btn btn-primary" onclick="generateSessions(5)">Generate 5 Sessions</button>
+                <button class="control-btn btn-success" onclick="generateSessions(15)">Generate 15 Sessions</button>
+                <button class="control-btn btn-warning" onclick="generateQuestionTagStats()">Generate Question Tag Stats</button>
+                <button class="control-btn btn-danger" onclick="clearData()">Clear Data</button>
+            </div>
+        </div>
+
+        <div class="test-section">
+            <h3>📈 Tab Statistics Test</h3>
+            <div class="tab-container">
+                <div class="tab-list">
+                    <button class="tab-trigger active" onclick="switchTab('history')">Riwayat</button>
+                    <button class="tab-trigger" onclick="switchTab('statistics')">Statistik</button>
+                </div>
+                
+                <div id="historyTab" class="tab-content">
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <div class="stat-value" id="historySessions">0</div>
+                            <div class="stat-label">Sessions</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-value" id="historyPackages">0</div>
+                            <div class="stat-label">Packages</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div id="statisticsTab" class="tab-content" style="display: none;">
+                    <div id="statisticsContent">
+                        <div class="loading-spinner">
+                            <div class="spinner"></div>
+                            <p>Loading statistik...</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="log-panel">
+            <h3>📝 Activity Log</h3>
+            <div id="logContainer">
+                <div class="log-entry log-info">System initialized. Ready for testing history statistics fix.</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        class HistoryStatisticsTest {
+            constructor() {
+                this.sessions = [];
+                this.questionTagStats = [];
+                this.loadingStats = false;
+                this.currentTab = 'history';
+                this.initialize();
+            }
+            
+            initialize() {
+                this.log('🚀 Initializing history statistics test...');
+                this.log('📋 Test scenarios:');
+                this.log('   • Generate mock sessions data');
+                this.log('   • Generate mock question tag stats');
+                this.log('   • Test tab switching');
+                this.log('   • Test statistics loading state');
+                this.log('   • Verify loading state management');
+            }
+            
+            generateSessions(count) {
+                this.log(`🔄 Generating ${count} mock sessions...`);
+                
+                this.sessions = [];
+                for (let i = 0; i < count; i++) {
+                    this.sessions.push({
+                        id: `session-${i + 1}`,
+                        package_id: `package-${Math.floor(Math.random() * 3) + 1}`,
+                        status: Math.random() > 0.3 ? 'completed' : 'in_progress',
+                        created_at: new Date(Date.now() - Math.random() * 30 * 24 * 60 * 60 * 1000).toISOString(),
+                        total_score: Math.floor(Math.random() * 100) + 50,
+                        correct_answers: Math.floor(Math.random() * 20) + 10,
+                        wrong_answers: Math.floor(Math.random() * 15) + 5,
+                        unanswered: Math.floor(Math.random() * 10),
+                        user_id: 'user-1'
+                    });
+                }
+                
+                this.log(`✅ Generated ${count} sessions successfully`, 'success');
+                this.updateDisplay();
+            }
+            
+            generateQuestionTagStats() {
+                this.log('🔄 Generating question tag stats...');
+                
+                this.questionTagStats = [
+                    {
+                        id: 'stat-1',
+                        user_id: 'user-1',
+                        session_id: 'session-1',
+                        main_category: 'TWK',
+                        sub_category: 'Pancasila',
+                        total_questions: 15,
+                        correct_answers: 12,
+                        wrong_answers: 2,
+                        unanswered: 1,
+                        total_points: 85,
+                        total_time_seconds: 675
+                    },
+                    {
+                        id: 'stat-2',
+                        user_id: 'user-1',
+                        session_id: 'session-2',
+                        main_category: 'TIU',
+                        sub_category: 'Logika',
+                        total_questions: 25,
+                        correct_answers: 20,
+                        wrong_answers: 4,
+                        unanswered: 1,
+                        total_points: 95,
+                        total_time_seconds: 1500
+                    }
+                ];
+                
+                this.log(`✅ Generated ${this.questionTagStats.length} question tag stats successfully`, 'success');
+                this.updateDisplay();
+            }
+            
+            clearData() {
+                this.log('🗑️ Clearing all data...', 'warning');
+                this.sessions = [];
+                this.questionTagStats = [];
+                this.loadingStats = false;
+                this.updateDisplay();
+                this.log('✅ Data cleared');
+            }
+            
+            switchTab(tabName) {
+                this.log(`🔄 Switching to tab: ${tabName}`);
+                this.currentTab = tabName;
+                
+                // Update tab triggers
+                document.querySelectorAll('.tab-trigger').forEach(trigger => {
+                    trigger.classList.remove('active');
+                });
+                event.target.classList.add('active');
+                
+                // Update tab content
+                document.getElementById('historyTab').style.display = tabName === 'history' ? 'flex' : 'none';
+                document.getElementById('statisticsTab').style.display = tabName === 'statistics' ? 'flex' : 'none';
+                
+                // Simulate loading statistics when switching to statistics tab
+                if (tabName === 'statistics') {
+                    this.simulateLoadStatistics();
+                }
+                
+                this.log(`✅ Switched to ${tabName} tab`);
+            }
+            
+            simulateLoadStatistics() {
+                if (this.questionTagStats.length === 0) {
+                    this.log('📊 No question tag stats available, simulating loading...');
+                    this.loadingStats = true;
+                    this.updateDisplay();
+                    
+                    // Simulate API call delay
+                    setTimeout(() => {
+                        this.log('📊 Simulating API call completion...');
+                        this.loadingStats = false;
+                        this.updateDisplay();
+                        this.renderStatistics();
+                    }, 2000);
+                } else {
+                    this.log('📊 Question tag stats already available, rendering immediately');
+                    this.renderStatistics();
+                }
+            }
+            
+            renderStatistics() {
+                const container = document.getElementById('statisticsContent');
+                
+                if (this.loadingStats) {
+                    container.innerHTML = `
+                        <div class="loading-spinner">
+                            <div class="spinner"></div>
+                            <p>Loading statistik...</p>
+                        </div>
+                    `;
+                    return;
+                }
+                
+                if (this.questionTagStats.length === 0) {
+                    container.innerHTML = `
+                        <div class="stats-grid">
+                            <div class="stat-card">
+                                <div class="stat-value">0</div>
+                                <div class="stat-label">No Statistics Available</div>
+                            </div>
+                        </div>
+                    `;
+                    return;
+                }
+                
+                // Calculate stats
+                const completedSessions = this.sessions.filter(s => s.status === 'completed');
+                const stats = this.calculateStats(completedSessions);
+                
+                container.innerHTML = `
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <div class="stat-value">${stats.totalSessions}</div>
+                            <div class="stat-label">Total Tryout</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-value">${stats.averageScore}</div>
+                            <div class="stat-label">Rata-rata Skor</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-value">${stats.highestScore}</div>
+                            <div class="stat-label">Skor Tertinggi</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-value">${stats.accuracy}%</div>
+                            <div class="stat-label">Akurasi</div>
+                        </div>
+                    </div>
+                `;
+                
+                this.log('✅ Statistics rendered successfully');
+            }
+            
+            calculateStats(completedSessions) {
+                if (completedSessions.length === 0) return {
+                    totalSessions: 0,
+                    averageScore: 0,
+                    highestScore: 0,
+                    accuracy: 0
+                };
+
+                const totalScore = completedSessions.reduce((sum, s) => sum + s.total_score, 0);
+                const averageScore = Math.round(totalScore / completedSessions.length);
+                const highestScore = Math.max(...completedSessions.map(s => s.total_score));
+                const totalQuestions = completedSessions.reduce((sum, s) => 
+                    sum + s.correct_answers + s.wrong_answers + s.unanswered, 0);
+                const totalCorrect = completedSessions.reduce((sum, s) => sum + s.correct_answers, 0);
+                const accuracy = totalQuestions > 0 ? Math.round((totalCorrect / totalQuestions) * 100) : 0;
+
+                return {
+                    totalSessions: completedSessions.length,
+                    averageScore,
+                    highestScore,
+                    accuracy
+                };
+            }
+            
+            updateDisplay() {
+                document.getElementById('totalSessions').textContent = this.sessions.length;
+                document.getElementById('completedSessions').textContent = this.sessions.filter(s => s.status === 'completed').length;
+                document.getElementById('questionTagStats').textContent = this.questionTagStats.length;
+                document.getElementById('loadingState').textContent = this.loadingStats.toString();
+                
+                document.getElementById('historySessions').textContent = this.sessions.length;
+                document.getElementById('historyPackages').textContent = new Set(this.sessions.map(s => s.package_id)).size;
+                
+                // Update statistics tab if it's currently active
+                if (this.currentTab === 'statistics') {
+                    this.renderStatistics();
+                }
+            }
+            
+            log(message, type = 'info') {
+                const logContainer = document.getElementById('logContainer');
+                const logEntry = document.createElement('div');
+                logEntry.className = `log-entry log-${type}`;
+                
+                const timestamp = new Date().toLocaleTimeString();
+                logEntry.textContent = `[${timestamp}] ${message}`;
+                
+                logContainer.appendChild(logEntry);
+                logContainer.scrollTop = logContainer.scrollHeight;
+                
+                // Keep only last 30 log entries
+                while (logContainer.children.length > 30) {
+                    logContainer.removeChild(logContainer.firstChild);
+                }
+                
+                console.log(`[${type.toUpperCase()}] ${message}`);
+            }
+        }
+        
+        // Initialize test
+        let statisticsTest;
+        
+        document.addEventListener('DOMContentLoaded', () => {
+            statisticsTest = new HistoryStatisticsTest();
+        });
+        
+        // Global functions for buttons
+        function generateSessions(count) {
+            if (statisticsTest) statisticsTest.generateSessions(count);
+        }
+        
+        function generateQuestionTagStats() {
+            if (statisticsTest) statisticsTest.generateQuestionTagStats();
+        }
+        
+        function clearData() {
+            if (statisticsTest) statisticsTest.clearData();
+        }
+        
+        function switchTab(tabName) {
+            if (statisticsTest) statisticsTest.switchTab(tabName);
+        }
+        
+        console.log('🔧 History Statistics Fix Test loaded!');
+        console.log('📋 Test fix for statistics tab loading issue');
+    </script>
+</body>
+</html>
