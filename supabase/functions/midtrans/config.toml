@@ -4,5 +4,4 @@ import_map = "import_map.json"
 
 [functions.midtrans.environment]
 NODE_ENV = "development"
-MIDTRANS_SERVER_KEY = "your_midtrans_server_key_here"
-MIDTRANS_CLIENT_KEY = "your_midtrans_client_key_here"
+

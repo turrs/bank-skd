@@ -3,14 +3,23 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, accept, origin',
+  'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+  'Access-Control-Max-Age': '86400',
 }
 
 serve(async (req) => {
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
+    console.log('🔄 CORS preflight request handled')
     return new Response('ok', { headers: corsHeaders })
   }
+
+  console.log('📥 Request received:', {
+    method: req.method,
+    url: req.url,
+    headers: Object.fromEntries(req.headers.entries())
+  })
 
   try {
     const { method, url } = req
@@ -23,12 +32,29 @@ serve(async (req) => {
     const supabase = createClient(supabaseUrl, supabaseServiceKey)
 
     // Midtrans configuration
-    const midtransServerKey = Deno.env.get('MIDTRANS_SERVER_KEY')!
-    const midtransClientKey = Deno.env.get('MIDTRANS_CLIENT_KEY')!
+    const midtransServerKey = Deno.env.get('MIDTRANS_SERVER_KEY')
+    const midtransClientKey = Deno.env.get('MIDTRANS_CLIENT_KEY')
     const isProduction = Deno.env.get('NODE_ENV') === 'production'
     const midtransBaseUrl = isProduction 
       ? 'https://api.midtrans.com' 
       : 'https://api.sandbox.midtrans.com'
+    
+    // Validate environment variables
+    if (!midtransServerKey) {
+      throw new Error('MIDTRANS_SERVER_KEY environment variable is not set')
+    }
+    
+    if (!midtransClientKey) {
+      throw new Error('MIDTRANS_CLIENT_KEY environment variable is not set')
+    }
+    
+    console.log('🔧 Environment check:', {
+      hasServerKey: !!midtransServerKey,
+      hasClientKey: !!midtransClientKey,
+      nodeEnv: Deno.env.get('NODE_ENV'),
+      midtransBaseUrl,
+      isProduction
+    })
 
     console.log(`🔗 ${method} ${path}`)
 
@@ -53,16 +79,16 @@ serve(async (req) => {
       }
 
       try {
-        // Create Midtrans transaction
+        // Create Midtrans Snap transaction
         const midtransPayload = {
           transaction_details: {
             order_id: payment_id,
-            gross_amount: amount
+            gross_amount: parseInt(amount)
           },
           item_details: [
             {
               id: payment_id,
-              price: amount,
+              price: parseInt(amount),
               quantity: 1,
               name: package_name
             }
@@ -72,15 +98,20 @@ serve(async (req) => {
             email: customer_email,
             phone: customer_phone || ''
           },
+          payment_type: ['credit_card', 'bca_va', 'bni_va', 'bri_va', 'mandiri_va', 'gopay', 'shopeepay', 'qris'],
           callbacks: {
             finish: `${urlObj.origin}/payment-success`,
             error: `${urlObj.origin}/payment-error`,
             pending: `${urlObj.origin}/payment-pending`
           }
         }
+        
+        console.log('🚀 Midtrans Snap payload:', JSON.stringify(midtransPayload, null, 2))
+        console.log('🔑 Using server key:', midtransServerKey ? 'Set' : 'Not set')
+        console.log('🌐 Midtrans base URL:', midtransBaseUrl)
 
-        // Call Midtrans API to create transaction
-        const midtransResponse = await fetch(`${midtransBaseUrl}/v2/charge`, {
+        // Call Midtrans Snap API to create transaction
+        const midtransResponse = await fetch(`${midtransBaseUrl}/v1/snap`, {
           method: 'POST',
           headers: {
             'Accept': 'application/json',
@@ -93,17 +124,38 @@ serve(async (req) => {
         if (!midtransResponse.ok) {
           const errorData = await midtransResponse.text()
           console.error('Midtrans API error:', errorData)
-          throw new Error(`Midtrans API error: ${midtransResponse.status}`)
+          console.error('Response status:', midtransResponse.status)
+          console.error('Response headers:', Object.fromEntries(midtransResponse.headers.entries()))
+          
+          // Try to parse error response
+          let errorMessage = `Midtrans API error: ${midtransResponse.status}`
+          try {
+            const parsedError = JSON.parse(errorData)
+            errorMessage = `Midtrans API error: ${parsedError.status_message || parsedError.status_code || midtransResponse.status}`
+          } catch (e) {
+            errorMessage = `Midtrans API error: ${midtransResponse.status} - ${errorData}`
+          }
+          
+          throw new Error(errorMessage)
         }
 
         const midtransData = await midtransResponse.json()
+        
+        console.log('Midtrans Snap response:', midtransData)
+        
+        // For Snap, we need the token, not redirect_url
+        const snapToken = midtransData.token
+        
+        if (!snapToken) {
+          throw new Error('No Snap token received from Midtrans')
+        }
         
         // Update payment record with Midtrans data
         const { error: updateError } = await supabase
           .from('payments')
           .update({
             midtrans_order_id: midtransData.order_id,
-            midtrans_token: midtransData.redirect_url,
+            midtrans_token: snapToken,
             status: 'pending'
           })
           .eq('id', payment_id)
@@ -115,9 +167,9 @@ serve(async (req) => {
         return new Response(
           JSON.stringify({
             success: true,
-            token: midtransData.redirect_url,
+            token: snapToken,
             order_id: midtransData.order_id,
-            redirect_url: midtransData.redirect_url
+            snap_token: snapToken
           }),
           {
             status: 200,
@@ -344,7 +396,8 @@ serve(async (req) => {
     return new Response(
       JSON.stringify({
         error: true,
-        message: `Internal server error: ${error.message}`
+        message: `Internal server error: ${error.message}`,
+        timestamp: new Date().toISOString()
       }),
       {
         status: 500,

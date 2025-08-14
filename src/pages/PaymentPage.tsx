@@ -225,11 +225,12 @@ const PaymentPage = () => {
         nodeEnv: process.env.NODE_ENV
       });
 
-      // Call Midtrans API on local server
-              const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/midtrans/create-token`, {
+      // Call Midtrans API via Supabase Edge Function
+      const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/create-token`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
         },
         body: JSON.stringify(midtransData),
       });
@@ -247,6 +248,8 @@ const PaymentPage = () => {
       console.log('Midtrans response:', result); // Debug
 
       if (result.token && result.success) {
+        console.log('Snap token received:', result.token);
+        
         // Open Midtrans Snap
         setIsSnapOpen(true);
         
@@ -270,6 +273,7 @@ const PaymentPage = () => {
           }
         });
       } else {
+        console.error('Invalid response:', result);
         throw new Error('No payment token received');
       }
 

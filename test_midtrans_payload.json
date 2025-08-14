@@ -1,0 +1,34 @@
+{
+  "transaction_details": {
+    "order_id": "test-order-123",
+    "gross_amount": 50000
+  },
+  "item_details": [
+    {
+      "id": "test-order-123",
+      "price": 50000,
+      "quantity": 1,
+      "name": "Test Package"
+    }
+  ],
+  "customer_details": {
+    "first_name": "Test User",
+    "email": "test@example.com",
+    "phone": "08123456789"
+  },
+  "payment_type": [
+    "credit_card",
+    "bca_va",
+    "bni_va",
+    "bri_va",
+    "mandiri_va",
+    "gopay",
+    "shopeepay",
+    "qris"
+  ],
+  "callbacks": {
+    "finish": "https://example.com/payment-success",
+    "error": "https://example.com/payment-error",
+    "pending": "https://example.com/payment-pending"
+  }
+}
