@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "@/hooks/use-toast";
 import { 
   Plus, 
@@ -24,11 +25,13 @@ import {
   CheckCircle,
   XCircle,
   DollarSign,
-  TrendingUp
+  TrendingUp,
+  Wallet
 } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import PackageForm from "@/components/PackageForm";
 import QuestionForm from "@/components/QuestionForm";
+import MentorBalance from "@/components/MentorBalance";
 import { TableSkeleton } from "@/components/StatsSkeleton";
 import { AdminTableSkeleton } from "@/components/AdminSkeleton";
 
@@ -431,390 +434,48 @@ const MentorPage = () => {
           </Card>
         </div>
 
-        {/* Package List */}
-        <div className="bg-white rounded-lg shadow-sm border mb-8">
-          <div className="p-6 border-b">
-            <div className="flex justify-between items-center">
-              <div>
-                <h2 className="text-xl font-semibold text-gray-900">Paket Soal Saya</h2>
-                <p className="text-sm text-gray-600 mt-1">
-                  Kelola paket soal yang Anda buat
-                </p>
-              </div>
-              <Button 
-                onClick={() => setShowAddPackageDialog(true)}
-                className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700"
-              >
-                <Plus className="w-4 h-4 mr-2" />
-                Tambah Paket
-              </Button>
-            </div>
-          </div>
-          
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead className="bg-gray-50 border-b">
-                <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Status
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Paket Soal
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Harga
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Durasi
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Soal
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Pembuat
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Aksi
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
-                {loading ? (
-                  <AdminTableSkeleton rowCount={5} />
-                ) : packages
-                  .slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage)
-                  .map((pkg) => (
-                  <tr key={pkg.id} className={`hover:bg-gray-50 ${
-                    !pkg.is_active ? 'bg-gray-100 opacity-75' : ''
-                  }`}>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="flex items-center">
-                        {pkg.is_active ? (
-                          <Eye className="h-4 w-4 text-green-600 mr-2" />
-                        ) : (
-                          <EyeOff className="h-4 w-4 text-gray-400 mr-2" />
-                        )}
-                        <Badge 
-                          variant={pkg.is_active ? "default" : "secondary"}
-                          className={pkg.is_active ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-600'}
-                        >
-                          {pkg.is_active ? 'Aktif' : 'Tersembunyi'}
-                        </Badge>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div>
-                        <div className="text-sm font-medium text-gray-900">
-                          {pkg.title}
-                        </div>
-                        <div className="text-sm text-gray-500">
-                          {pkg.description}
-                        </div>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-900">
-                        {pkg.original_price && pkg.discount_percentage > 0 ? (
-                          <div>
-                            <span className="line-through text-gray-500">
-                              Rp {pkg.original_price?.toLocaleString()}
-                            </span>
-                            <br />
-                            <span className="text-red-600 font-semibold">
-                              Rp {pkg.price?.toLocaleString()}
-                            </span>
-                            <span className="text-xs text-red-600 ml-1">
-                              (-{pkg.discount_percentage}%)
-                            </span>
-                          </div>
-                        ) : (
-                          <span>Rp {pkg.price?.toLocaleString()}</span>
-                        )}
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      {pkg.duration_minutes} menit
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      {pkg.total_questions} soal
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      {user?.id === pkg.creator_id ? 'Anda' : 'Pengguna Lain'}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                      <div className="flex items-center space-x-2">
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => openEditPackageDialog(pkg)}
-                        >
-                          Edit
-                        </Button>
-                        
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="sm">
-                              <MoreHorizontal className="h-4 w-4" />
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
-                            <DropdownMenuItem
-                              onClick={() => togglePackageVisibility(pkg.id, pkg.is_active)}
-                              className="flex items-center"
-                            >
-                              {pkg.is_active ? (
-                                <>
-                                  <EyeOff className="h-4 w-4 mr-2" />
-                                  Sembunyikan Paket
-                                </>
-                              ) : (
-                                <>
-                                  <Eye className="h-4 w-4 mr-2" />
-                                  Tampilkan Paket
-                                </>
-                              )}
-                            </DropdownMenuItem>
-                            
-                            <DropdownMenuItem
-                              onClick={() => {
-                                setSelectedPackageId(pkg.id);
-                                setShowAddQuestionDialog(true);
-                              }}
-                              className="flex items-center"
-                            >
-                              <Plus className="h-4 w-4 mr-2" />
-                              Tambah Soal
-                            </DropdownMenuItem>
-                            
-                            <DropdownMenuItem
-                              onClick={() => deletePackage(pkg.id)}
-                              className="flex items-center text-red-600"
-                            >
-                              <Trash2 className="h-4 w-4 mr-2" />
-                              Hapus Paket
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-          
-          {/* Pagination */}
-          {packages.length > itemsPerPage && (
-            <div className="px-6 py-4 border-t border-gray-200">
-              <div className="flex items-center justify-between">
-                <div className="text-sm text-gray-700">
-                  Menampilkan {((currentPage - 1) * itemsPerPage) + 1} sampai{' '}
-                  {Math.min(currentPage * itemsPerPage, packages.length)} dari{' '}
-                  {packages.length} paket soal
-                </div>
-                <div className="flex items-center space-x-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setCurrentPage(currentPage - 1)}
-                    disabled={currentPage === 1}
-                  >
-                    Sebelumnya
-                  </Button>
-                  <div className="flex items-center space-x-1">
-                    {Array.from({ length: Math.ceil(packages.length / itemsPerPage) }, (_, i) => (
-                      <Button
-                        key={i + 1}
-                        variant={currentPage === i + 1 ? "default" : "outline"}
-                        size="sm"
-                        onClick={() => setCurrentPage(i + 1)}
-                        className="w-8 h-8 p-0"
-                      >
-                        {i + 1}
-                      </Button>
-                    ))}
+        {/* Main Content Tabs */}
+        <Tabs defaultValue="packages" className="space-y-6">
+          <TabsList className="grid w-full grid-cols-4">
+            <TabsTrigger value="packages" className="flex items-center gap-2">
+              <Package className="w-4 h-4" />
+              Paket Soal
+            </TabsTrigger>
+            <TabsTrigger value="questions" className="flex items-center gap-2">
+              <FileText className="w-4 h-4" />
+              Soal
+            </TabsTrigger>
+            <TabsTrigger value="balance" className="flex items-center gap-2">
+              <Wallet className="w-4 h-4" />
+              Balance & Withdrawal
+            </TabsTrigger>
+            <TabsTrigger value="statistics" className="flex items-center gap-2">
+              <BarChart3 className="w-4 h-4" />
+              Statistik
+            </TabsTrigger>
+          </TabsList>
+
+          {/* Packages Tab */}
+          <TabsContent value="packages" className="space-y-6">
+            <div className="bg-white rounded-lg shadow-sm border">
+              <div className="p-6 border-b">
+                <div className="flex justify-between items-center">
+                  <div>
+                    <h2 className="text-xl font-semibold text-gray-900">Paket Soal Saya</h2>
+                    <p className="text-sm text-gray-600 mt-1">
+                      Kelola paket soal yang Anda buat
+                    </p>
                   </div>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setCurrentPage(currentPage + 1)}
-                    disabled={currentPage === Math.ceil(packages.length / itemsPerPage)}
+                  <Button 
+                    onClick={() => setShowAddPackageDialog(true)}
+                    className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700"
                   >
-                    Selanjutnya
+                    <Plus className="w-4 h-4 mr-2" />
+                    Tambah Paket
                   </Button>
                 </div>
               </div>
-            </div>
-          )}
-        </div>
-
-        {/* Questions List */}
-        {questions.length > 0 && (
-          <div className="bg-white rounded-lg shadow-sm border mb-8">
-            <div className="p-6 border-b">
-              <div className="flex justify-between items-center">
-                <div>
-                  <h2 className="text-xl font-semibold text-gray-900">Soal Saya</h2>
-                  <p className="text-sm text-gray-600 mt-1">
-                    Kelola soal yang Anda buat
-                  </p>
-                </div>
-              </div>
-            </div>
-            
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead className="bg-gray-50 border-b">
-                  <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      No
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Soal
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Kategori
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Paket
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Aksi
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
-                  {questions.map((question, index) => (
-                    <tr key={question.id} className="hover:bg-gray-50">
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        {index + 1}
-                      </td>
-                      <td className="px-6 py-4">
-                        <div className="text-sm text-gray-900 max-w-md truncate">
-                          {question.question_text}
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        <Badge variant="outline">
-                          {question.main_category}
-                        </Badge>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        {packages.find(pkg => pkg.id === question.package_id)?.title || 'Unknown'}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                        <div className="flex items-center space-x-2">
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => openEditQuestionDialog(question)}
-                          >
-                            Edit
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => deleteQuestion(question.id)}
-                            className="text-red-600 hover:text-red-700"
-                          >
-                            <Trash2 className="h-4 h-4" />
-                          </Button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        )}
-
-        {/* Package Purchase Statistics */}
-        <div className="bg-white rounded-lg shadow-sm border mb-8">
-          <div className="p-6 border-b">
-            <h2 className="text-xl font-semibold text-gray-900">Statistik Pembelian Paket</h2>
-            <p className="text-sm text-gray-600 mt-1">
-              Analisis performa paket soal Anda berdasarkan pembelian user
-            </p>
-          </div>
-          
-          <div className="p-6">
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-              {/* Total Sales */}
-              <Card className="bg-green-50 border-green-200">
-                <CardContent className="p-4">
-                  <div className="flex items-center space-x-3">
-                    <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
-                      <DollarSign className="w-5 h-5 text-green-600" />
-                    </div>
-                    <div>
-                      <p className="text-sm text-green-600 font-medium">Total Penjualan</p>
-                      <p className="text-2xl font-bold text-green-700">
-                        Rp {userPackageAccess.reduce((sum, access) => {
-                          const pkg = packages.find(p => p.id === access.package_id);
-                          return sum + (pkg?.price || 0);
-                        }, 0).toLocaleString()}
-                      </p>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-
-              {/* Total Users */}
-              <Card className="bg-blue-50 border-blue-200">
-                <CardContent className="p-4">
-                  <div className="flex items-center space-x-3">
-                    <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
-                      <Users className="w-5 h-5 text-blue-600" />
-                    </div>
-                    <div>
-                      <p className="text-sm text-blue-600 font-medium">Total User</p>
-                      <p className="text-2xl font-bold text-blue-700">
-                        {userPackageAccess.length}
-                      </p>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-
-              {/* Active Packages */}
-              <Card className="bg-yellow-50 border-yellow-200">
-                <CardContent className="p-4">
-                  <div className="flex items-center space-x-3">
-                    <div className="w-10 h-10 bg-yellow-100 rounded-lg flex items-center justify-center">
-                      <Package className="w-5 h-5 text-yellow-600" />
-                    </div>
-                    <div>
-                      <p className="text-sm text-yellow-600 font-medium">Paket Aktif</p>
-                      <p className="text-2xl font-bold text-yellow-700">
-                        {packages.filter(pkg => pkg.is_active).length}
-                      </p>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-
-              {/* Conversion Rate */}
-              <Card className="bg-purple-50 border-purple-200">
-                <CardContent className="p-4">
-                  <div className="flex items-center space-x-3">
-                    <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
-                      <TrendingUp className="w-5 h-5 text-purple-600" />
-                    </div>
-                    <div>
-                      <p className="text-sm text-purple-600 font-medium">Conversion Rate</p>
-                      <p className="text-2xl font-bold text-purple-700">
-                        {packages.length > 0 ? Math.round((userPackageAccess.length / packages.length) * 100) : 0}%
-                      </p>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-
-            {/* Package Performance */}
-            <div className="mt-8">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">Performa Paket Soal</h3>
+              
               <div className="overflow-x-auto">
                 <table className="w-full">
                   <thead className="bg-gray-50 border-b">
@@ -829,136 +490,169 @@ const MentorPage = () => {
                         Harga
                       </th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Pembeli
+                        Durasi
                       </th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Total Pendapatan
+                        Soal
                       </th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Performa
+                        Pembuat
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Aksi
                       </th>
                     </tr>
                   </thead>
                   <tbody className="bg-white divide-y divide-gray-200">
-                    {packages
-                      .slice((currentPurchasePage - 1) * purchaseItemsPerPage, currentPurchasePage * purchaseItemsPerPage)
-                      .map((pkg) => {
-                      const packageAccess = userPackageAccess.filter(access => access.package_id === pkg.id);
-                      const totalRevenue = packageAccess.length * (pkg.price || 0);
-                      const isActive = pkg.is_active;
-                      
-                      return (
-                        <tr key={pkg.id} className={`hover:bg-gray-50 ${
-                          !isActive ? 'bg-gray-100 opacity-75' : ''
-                        }`}>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <div className="flex items-center">
-                              {isActive ? (
-                                <Eye className="h-4 w-4 text-green-600 mr-2" />
-                              ) : (
-                                <EyeOff className="h-4 w-4 text-gray-400 mr-2" />
-                              )}
-                              <Badge 
-                                variant={isActive ? "default" : "secondary"}
-                                className={isActive ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-600'}
-                              >
-                                {isActive ? 'Aktif' : 'Nonaktif'}
-                              </Badge>
+                    {loading ? (
+                      <AdminTableSkeleton rowCount={5} />
+                    ) : packages
+                      .slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage)
+                      .map((pkg) => (
+                      <tr key={pkg.id} className={`hover:bg-gray-50 ${
+                        !pkg.is_active ? 'bg-gray-100 opacity-75' : ''
+                      }`}>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="flex items-center">
+                            {pkg.is_active ? (
+                              <Eye className="h-4 w-4 text-green-600 mr-2" />
+                            ) : (
+                              <EyeOff className="h-4 w-4 text-gray-400 mr-2" />
+                            )}
+                            <Badge 
+                              variant={pkg.is_active ? "default" : "secondary"}
+                              className={pkg.is_active ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-600'}
+                            >
+                              {pkg.is_active ? 'Aktif' : 'Tersembunyi'}
+                            </Badge>
+                          </div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div>
+                            <div className="text-sm font-medium text-gray-900">
+                              {pkg.title}
                             </div>
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <div>
-                              <div className="text-sm font-medium text-gray-900">
-                                {pkg.title}
+                            <div className="text-sm text-gray-500">
+                              {pkg.description}
+                            </div>
+                          </div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="text-sm text-gray-900">
+                            {pkg.original_price && pkg.discount_percentage > 0 ? (
+                              <div>
+                                <span className="line-through text-gray-500">
+                                  Rp {pkg.original_price?.toLocaleString()}
+                                </span>
+                                <br />
+                                <span className="text-red-600 font-semibold">
+                                  Rp {pkg.price?.toLocaleString()}
+                                </span>
+                                <span className="text-xs text-red-600 ml-1">
+                                  (-{pkg.discount_percentage}%)
+                                </span>
                               </div>
-                              <div className="text-sm text-gray-500">
-                                {pkg.description}
-                              </div>
-                            </div>
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <div className="text-sm text-gray-900">
-                              {pkg.original_price && pkg.discount_percentage > 0 ? (
-                                <div>
-                                  <span className="line-through text-gray-500">
-                                    Rp {pkg.original_price?.toLocaleString()}
-                                  </span>
-                                  <br />
-                                  <span className="text-red-600 font-semibold">
-                                    Rp {pkg.price?.toLocaleString()}
-                                  </span>
-                                  <span className="text-xs text-red-600 ml-1">
-                                    (-{pkg.discount_percentage}%)
-                                  </span>
-                                </div>
-                              ) : (
-                                <span>Rp {pkg.price?.toLocaleString()}</span>
-                              )}
-                            </div>
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                            <div className="text-center">
-                              <span className="font-semibold text-blue-600">
-                                {packageAccess.length}
-                              </span>
-                              <br />
-                              <span className="text-xs text-gray-500">pembeli</span>
-                            </div>
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                            <div className="text-right">
-                              <span className="font-bold text-green-600">
-                                Rp {totalRevenue.toLocaleString()}
-                              </span>
-                            </div>
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                            <div className="flex items-center space-x-2">
-                              {packageAccess.length > 0 ? (
-                                <Badge variant="default" className="bg-green-100 text-green-800">
-                                  <CheckCircle className="w-3 h-3 mr-1" />
-                                  Terjual
-                                </Badge>
-                              ) : (
-                                <Badge variant="secondary" className="bg-gray-100 text-gray-600">
-                                  <XCircle className="w-3 h-3 mr-1" />
-                                  Belum Terjual
-                                </Badge>
-                              )}
-                            </div>
-                          </td>
-                        </tr>
-                      );
-                    })}
+                            ) : (
+                              <span>Rp {pkg.price?.toLocaleString()}</span>
+                            )}
+                          </div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                          {pkg.duration_minutes} menit
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                          {pkg.total_questions} soal
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                          {user?.id === pkg.creator_id ? 'Anda' : 'Pengguna Lain'}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                          <div className="flex items-center space-x-2">
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => openEditPackageDialog(pkg)}
+                            >
+                              Edit
+                            </Button>
+                            
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Button variant="ghost" size="sm">
+                                  <MoreHorizontal className="h-4 w-4" />
+                                </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end">
+                                <DropdownMenuItem
+                                  onClick={() => togglePackageVisibility(pkg.id, pkg.is_active)}
+                                  className="flex items-center"
+                                >
+                                  {pkg.is_active ? (
+                                    <>
+                                      <EyeOff className="h-4 w-4 mr-2" />
+                                      Sembunyikan Paket
+                                    </>
+                                  ) : (
+                                    <>
+                                      <Eye className="h-4 w-4 mr-2" />
+                                      Tampilkan Paket
+                                    </>
+                                  )}
+                                </DropdownMenuItem>
+                                
+                                <DropdownMenuItem
+                                  onClick={() => {
+                                    setSelectedPackageId(pkg.id);
+                                    setShowAddQuestionDialog(true);
+                                  }}
+                                  className="flex items-center"
+                                >
+                                  <Plus className="h-4 w-4 mr-2" />
+                                  Tambah Soal
+                                </DropdownMenuItem>
+                                
+                                <DropdownMenuItem
+                                  onClick={() => deletePackage(pkg.id)}
+                                  className="flex items-center text-red-600"
+                                >
+                                  <Trash2 className="h-4 w-4 mr-2" />
+                                  Hapus Paket
+                                </DropdownMenuItem>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
                   </tbody>
                 </table>
               </div>
               
-              {/* Pagination for Package Performance */}
-              {packages.length > purchaseItemsPerPage && (
-                <div className="mt-6 pt-4 border-t border-gray-200">
+              {/* Pagination */}
+              {packages.length > itemsPerPage && (
+                <div className="px-6 py-4 border-t border-gray-200">
                   <div className="flex items-center justify-between">
                     <div className="text-sm text-gray-700">
-                      Menampilkan {((currentPurchasePage - 1) * purchaseItemsPerPage) + 1} sampai{' '}
-                      {Math.min(currentPurchasePage * purchaseItemsPerPage, packages.length)} dari{' '}
+                      Menampilkan {((currentPage - 1) * itemsPerPage) + 1} sampai{' '}
+                      {Math.min(currentPage * itemsPerPage, packages.length)} dari{' '}
                       {packages.length} paket soal
                     </div>
                     <div className="flex items-center space-x-2">
                       <Button
                         variant="outline"
                         size="sm"
-                        onClick={() => setCurrentPurchasePage(currentPurchasePage - 1)}
-                        disabled={currentPurchasePage === 1}
+                        onClick={() => setCurrentPage(currentPage - 1)}
+                        disabled={currentPage === 1}
                       >
                         Sebelumnya
                       </Button>
                       <div className="flex items-center space-x-1">
-                        {Array.from({ length: Math.ceil(packages.length / purchaseItemsPerPage) }, (_, i) => (
+                        {Array.from({ length: Math.ceil(packages.length / itemsPerPage) }, (_, i) => (
                           <Button
                             key={i + 1}
-                            variant={currentPurchasePage === i + 1 ? "default" : "outline"}
+                            variant={currentPage === i + 1 ? "default" : "outline"}
                             size="sm"
-                            onClick={() => setCurrentPurchasePage(i + 1)}
+                            onClick={() => setCurrentPage(i + 1)}
                             className="w-8 h-8 p-0"
                           >
                             {i + 1}
@@ -968,8 +662,8 @@ const MentorPage = () => {
                       <Button
                         variant="outline"
                         size="sm"
-                        onClick={() => setCurrentPurchasePage(currentPurchasePage + 1)}
-                        disabled={currentPurchasePage === Math.ceil(packages.length / purchaseItemsPerPage)}
+                        onClick={() => setCurrentPage(currentPage + 1)}
+                        disabled={currentPage === Math.ceil(packages.length / itemsPerPage)}
                       >
                         Selanjutnya
                       </Button>
@@ -978,54 +672,367 @@ const MentorPage = () => {
                 </div>
               )}
             </div>
+          </TabsContent>
 
-            {/* Recent Purchases */}
-            {userPackageAccess.length > 0 && (
-              <div className="mt-8">
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">Pembelian Terbaru</h3>
-                <div className="bg-gray-50 rounded-lg p-4">
-                  <div className="space-y-2">
-                    {userPackageAccess
-                      .slice((currentPurchasePage - 1) * purchaseItemsPerPage, currentPurchasePage * purchaseItemsPerPage)
-                      .map((access, index) => {
-                      const pkg = packages.find(p => p.id === access.package_id);
-                      return (
-                        <div key={access.id} className="flex items-center justify-between py-2">
-                          <div className="flex items-center space-x-3">
-                            <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
-                              <span className="text-sm font-medium text-blue-600">
-                                {((currentPurchasePage - 1) * purchaseItemsPerPage) + index + 1}
-                              </span>
-                            </div>
-                            <div>
-                              <p className="font-medium text-gray-900">{pkg?.title || 'Unknown Package'}</p>
-                              <p className="text-sm text-gray-600">User ID: {access.user_id?.slice(0, 8)}...</p>
-                            </div>
-                          </div>
-                          <div className="text-right">
-                            <p className="font-medium text-gray-900">
-                              Rp {pkg?.price?.toLocaleString() || 0}
-                            </p>
-                            <p className="text-xs text-gray-500">
-                              {new Date(access.created_at).toLocaleDateString('id-ID')}
-                            </p>
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                  {userPackageAccess.length > purchaseItemsPerPage && (
-                    <div className="mt-3 pt-3 border-t border-gray-200 text-center">
-                      <p className="text-sm text-gray-600">
-                        Dan {userPackageAccess.length - purchaseItemsPerPage} pembelian lainnya...
+          {/* Questions Tab */}
+          <TabsContent value="questions" className="space-y-6">
+            {questions.length > 0 ? (
+              <div className="bg-white rounded-lg shadow-sm border">
+                <div className="p-6 border-b">
+                  <div className="flex justify-between items-center">
+                    <div>
+                      <h2 className="text-xl font-semibold text-gray-900">Soal Saya</h2>
+                      <p className="text-sm text-gray-600 mt-1">
+                        Kelola soal yang Anda buat
                       </p>
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="overflow-x-auto">
+                  <table className="w-full">
+                    <thead className="bg-gray-50 border-b">
+                      <tr>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          No
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Soal
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Kategori
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Paket
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Aksi
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody className="bg-white divide-y divide-gray-200">
+                      {questions.map((question, index) => (
+                        <tr key={question.id} className="hover:bg-gray-50">
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                            {index + 1}
+                          </td>
+                          <td className="px-6 py-4">
+                            <div className="text-sm text-gray-900 max-w-md truncate">
+                              {question.question_text}
+                            </div>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                            <Badge variant="outline">
+                              {question.main_category}
+                            </Badge>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                            {packages.find(pkg => pkg.id === question.package_id)?.title || 'Unknown'}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                            <div className="flex items-center space-x-2">
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => openEditQuestionDialog(question)}
+                              >
+                                Edit
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => deleteQuestion(question.id)}
+                                className="text-red-600 hover:text-red-700"
+                              >
+                                <Trash2 className="h-4 h-4" />
+                              </Button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            ) : (
+              <div className="bg-white rounded-lg shadow-sm border p-8 text-center">
+                <FileText className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+                <h3 className="text-lg font-medium text-gray-900 mb-2">Belum Ada Soal</h3>
+                <p className="text-gray-500 mb-4">
+                  Anda belum membuat soal apapun. Mulai dengan membuat paket soal terlebih dahulu.
+                </p>
+                <Button 
+                  onClick={() => setShowAddPackageDialog(true)}
+                  className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700"
+                >
+                  <Plus className="w-4 h-4 mr-2" />
+                  Buat Paket Soal
+                </Button>
+              </div>
+            )}
+          </TabsContent>
+
+          {/* Balance Tab */}
+          <TabsContent value="balance" className="space-y-6">
+            <MentorBalance mentorId={user.id} />
+          </TabsContent>
+
+          {/* Statistics Tab */}
+          <TabsContent value="statistics" className="space-y-6">
+            <div className="bg-white rounded-lg shadow-sm border">
+              <div className="p-6 border-b">
+                <h2 className="text-xl font-semibold text-gray-900">Statistik Pembelian Paket</h2>
+                <p className="text-sm text-gray-600 mt-1">
+                  Analisis performa paket soal Anda berdasarkan pembelian user
+                </p>
+              </div>
+              
+              <div className="p-6">
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+                  {/* Total Sales */}
+                  <Card className="bg-green-50 border-green-200">
+                    <CardContent className="p-4">
+                      <div className="flex items-center space-x-3">
+                        <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
+                          <DollarSign className="w-5 h-5 text-green-600" />
+                        </div>
+                        <div>
+                          <p className="text-sm text-green-600 font-medium">Total Penjualan</p>
+                          <p className="text-2xl font-bold text-green-700">
+                            Rp {userPackageAccess.reduce((sum, access) => {
+                              const pkg = packages.find(p => p.id === access.package_id);
+                              return sum + (pkg?.price || 0);
+                            }, 0).toLocaleString()}
+                          </p>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  {/* Total Users */}
+                  <Card className="bg-blue-50 border-blue-200">
+                    <CardContent className="p-4">
+                      <div className="flex items-center space-x-3">
+                        <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+                          <Users className="w-5 h-5 text-blue-600" />
+                        </div>
+                        <div>
+                          <p className="text-sm text-blue-600 font-medium">Total User</p>
+                          <p className="text-2xl font-bold text-blue-700">
+                            {userPackageAccess.length}
+                          </p>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  {/* Active Packages */}
+                  <Card className="bg-yellow-50 border-yellow-200">
+                    <CardContent className="p-4">
+                      <div className="flex items-center space-x-3">
+                        <div className="w-10 h-10 bg-yellow-100 rounded-lg flex items-center justify-center">
+                          <Package className="w-5 h-5 text-yellow-600" />
+                        </div>
+                        <div>
+                          <p className="text-sm text-yellow-600 font-medium">Paket Aktif</p>
+                          <p className="text-2xl font-bold text-yellow-700">
+                            {packages.filter(pkg => pkg.is_active).length}
+                          </p>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  {/* Conversion Rate */}
+                  <Card className="bg-purple-50 border-purple-200">
+                    <CardContent className="p-4">
+                      <div className="flex items-center space-x-3">
+                        <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
+                          <TrendingUp className="w-5 h-5 text-purple-600" />
+                        </div>
+                        <div>
+                          <p className="text-sm text-purple-600 font-medium">Conversion Rate</p>
+                          <p className="text-2xl font-bold text-purple-700">
+                            {packages.length > 0 ? Math.round((userPackageAccess.length / packages.length) * 100) : 0}%
+                          </p>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </div>
+
+                {/* Package Performance */}
+                <div className="mt-8">
+                  <h3 className="text-lg font-semibold text-gray-900 mb-4">Performa Paket Soal</h3>
+                  <div className="overflow-x-auto">
+                    <table className="w-full">
+                      <thead className="bg-gray-50 border-b">
+                        <tr>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Status
+                          </th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Paket Soal
+                          </th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Harga
+                          </th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Pembeli
+                          </th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Total Pendapatan
+                          </th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Performa
+                          </th>
+                        </tr>
+                      </thead>
+                      <tbody className="bg-white divide-y divide-gray-200">
+                        {packages
+                          .slice((currentPurchasePage - 1) * purchaseItemsPerPage, currentPurchasePage * purchaseItemsPerPage)
+                          .map((pkg) => {
+                          const packageAccess = userPackageAccess.filter(access => access.package_id === pkg.id);
+                          const totalRevenue = packageAccess.length * (pkg.price || 0);
+                          const isActive = pkg.is_active;
+                          
+                          return (
+                            <tr key={pkg.id} className={`hover:bg-gray-50 ${
+                              !isActive ? 'bg-gray-100 opacity-75' : ''
+                            }`}>
+                              <td className="px-6 py-4 whitespace-nowrap">
+                                <div className="flex items-center">
+                                  {isActive ? (
+                                    <Eye className="h-4 w-4 text-green-600 mr-2" />
+                                  ) : (
+                                    <EyeOff className="h-4 w-4 text-gray-400 mr-2" />
+                                  )}
+                                  <Badge 
+                                    variant={isActive ? "default" : "secondary"}
+                                    className={isActive ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-600'}
+                                  >
+                                    {isActive ? 'Aktif' : 'Nonaktif'}
+                                  </Badge>
+                                </div>
+                              </td>
+                              <td className="px-6 py-4 whitespace-nowrap">
+                                <div>
+                                  <div className="text-sm font-medium text-gray-900">
+                                    {pkg.title}
+                                  </div>
+                                  <div className="text-sm text-gray-500">
+                                    {pkg.description}
+                                  </div>
+                                </div>
+                              </td>
+                              <td className="px-6 py-4 whitespace-nowrap">
+                                <div className="text-sm text-gray-900">
+                                  {pkg.original_price && pkg.discount_percentage > 0 ? (
+                                    <div>
+                                      <span className="line-through text-gray-500">
+                                        Rp {pkg.original_price?.toLocaleString()}
+                                      </span>
+                                      <br />
+                                      <span className="text-red-600 font-semibold">
+                                        Rp {pkg.price?.toLocaleString()}
+                                      </span>
+                                      <span className="text-xs text-red-600 ml-1">
+                                        (-{pkg.discount_percentage}%)
+                                      </span>
+                                    </div>
+                                  ) : (
+                                    <span>Rp {pkg.price?.toLocaleString()}</span>
+                                  )}
+                                </div>
+                              </td>
+                              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                <div className="text-center">
+                                  <span className="font-semibold text-blue-600">
+                                    {packageAccess.length}
+                                  </span>
+                                  <br />
+                                  <span className="text-xs text-gray-500">pembeli</span>
+                                </div>
+                              </td>
+                              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                <div className="text-right">
+                                  <span className="font-bold text-green-600">
+                                    Rp {totalRevenue.toLocaleString()}
+                                  </span>
+                                </div>
+                              </td>
+                              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                <div className="flex items-center space-x-2">
+                                  {packageAccess.length > 0 ? (
+                                    <Badge variant="default" className="bg-green-100 text-green-800">
+                                      <CheckCircle className="w-3 h-3 mr-1" />
+                                      Terjual
+                                    </Badge>
+                                  ) : (
+                                    <Badge variant="secondary" className="bg-gray-100 text-gray-600">
+                                      <XCircle className="w-3 h-3 mr-1" />
+                                      Belum Terjual
+                                    </Badge>
+                                  )}
+                                </div>
+                              </td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+                  
+                  {/* Pagination for Package Performance */}
+                  {packages.length > purchaseItemsPerPage && (
+                    <div className="mt-6 pt-4 border-t border-gray-200">
+                      <div className="flex items-center justify-between">
+                        <div className="text-sm text-gray-700">
+                          Menampilkan {((currentPurchasePage - 1) * purchaseItemsPerPage) + 1} sampai{' '}
+                          {Math.min(currentPurchasePage * purchaseItemsPerPage, packages.length)} dari{' '}
+                          {packages.length} paket soal
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => setCurrentPurchasePage(currentPurchasePage - 1)}
+                            disabled={currentPurchasePage === 1}
+                          >
+                            Sebelumnya
+                          </Button>
+                          <div className="flex items-center space-x-1">
+                            {Array.from({ length: Math.ceil(packages.length / purchaseItemsPerPage) }, (_, i) => (
+                              <Button
+                                key={i + 1}
+                                variant={currentPurchasePage === i + 1 ? "default" : "outline"}
+                                size="sm"
+                                onClick={() => setCurrentPurchasePage(i + 1)}
+                                className="w-8 h-8 p-0"
+                              >
+                                {i + 1}
+                              </Button>
+                            ))}
+                          </div>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => setCurrentPurchasePage(currentPurchasePage + 1)}
+                            disabled={currentPurchasePage === Math.ceil(packages.length / purchaseItemsPerPage)}
+                          >
+                            Selanjutnya
+                          </Button>
+                        </div>
+                      </div>
                     </div>
                   )}
                 </div>
+
+               
               </div>
-            )}
-          </div>
-        </div>
+            </div>
+          </TabsContent>
+        </Tabs>
       </div>
 
       {/* Add Package Dialog */}

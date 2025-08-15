@@ -1,49 +1,47 @@
 #!/bin/bash
 
-# Script untuk deploy role tentor ke database
-# Pastikan Supabase CLI sudah terinstall dan terkonfigurasi
-
+# Deploy Tentor Role Migration
 echo "🚀 Deploying Tentor Role Migration..."
 
-# Check if Supabase CLI is installed
+# Check if supabase CLI is installed
 if ! command -v supabase &> /dev/null; then
     echo "❌ Supabase CLI not found. Please install it first."
     echo "   Visit: https://supabase.com/docs/guides/cli"
     exit 1
 fi
 
-# Check if we're in the right directory
+# Check if we're in a Supabase project
 if [ ! -f "supabase/config.toml" ]; then
-    echo "❌ Not in Supabase project directory. Please run this from the project root."
+    echo "❌ Not in a Supabase project directory."
+    echo "   Please run this script from your project root."
     exit 1
 fi
 
+echo "📁 Current directory: $(pwd)"
+echo "🔧 Supabase project found"
+
 # Deploy the migration
-echo "📦 Deploying migration: add_tentor_role.sql"
+echo "📤 Deploying migration: add_tentor_role.sql"
 supabase db push
 
 if [ $? -eq 0 ]; then
     echo "✅ Migration deployed successfully!"
+    
     echo ""
-    echo "🎯 What was added:"
-    echo "   • Role field to users table (student, tentor, admin)"
-    echo "   • Tentor profiles table with detailed information"
-    echo "   • Tentor sessions table for tracking interactions"
-    echo "   • Tentor availability table for scheduling"
-    echo "   • Row Level Security (RLS) policies"
-    echo "   • Proper indexes for performance"
+    echo "🔍 Next steps:"
+    echo "1. Go to your Supabase Dashboard"
+    echo "2. Navigate to SQL Editor"
+    echo "3. Run the fix_admin_rls_policy.sql script"
+    echo "4. Test the admin dashboard mentor approval"
+    
     echo ""
-    echo "🔧 Next steps:"
-    echo "   1. Update your application code to use the new role system"
-    echo "   2. Create tentor accounts through your admin panel"
-    echo "   3. Test the new functionality"
-    echo ""
-    echo "📚 Documentation:"
-    echo "   • Users can now have roles: student, tentor, or admin"
-    echo "   • Tentors can create profiles with specializations"
-    echo "   • Students can book sessions with tentors"
-    echo "   • All data is protected with RLS policies"
+    echo "📝 Or run this SQL directly in Supabase SQL Editor:"
+    echo "----------------------------------------"
+    cat fix_admin_rls_policy.sql
+    echo "----------------------------------------"
+    
 else
-    echo "❌ Migration failed. Please check the error messages above."
+    echo "❌ Migration failed!"
+    echo "Please check the error messages above."
     exit 1
 fi

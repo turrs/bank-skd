@@ -110,6 +110,24 @@ CREATE POLICY "tentor_profiles_insert_own" ON tentor_profiles FOR INSERT WITH CH
 CREATE POLICY "tentor_profiles_update_own" ON tentor_profiles FOR UPDATE USING (auth.uid() = user_id);
 CREATE POLICY "tentor_profiles_delete_own" ON tentor_profiles FOR DELETE USING (auth.uid() = user_id);
 
+-- Add admin policy to view all tentor profiles (including unverified ones)
+CREATE POLICY "tentor_profiles_select_admin" ON tentor_profiles FOR SELECT USING (
+  EXISTS (
+    SELECT 1 FROM users 
+    WHERE users.id = auth.uid() 
+    AND users.is_admin = true
+  )
+);
+
+-- Add admin policy to update tentor profiles
+CREATE POLICY "tentor_profiles_update_admin" ON tentor_profiles FOR UPDATE USING (
+  EXISTS (
+    SELECT 1 FROM users 
+    WHERE users.id = auth.uid() 
+    AND users.is_admin = true
+  )
+);
+
 -- Create RLS policies for tentor_sessions
 CREATE POLICY "tentor_sessions_select_participant" ON tentor_sessions FOR SELECT USING (auth.uid() IN (tentor_id, student_id));
 CREATE POLICY "tentor_sessions_insert_participant" ON tentor_sessions FOR INSERT WITH CHECK (auth.uid() IN (tentor_id, student_id));

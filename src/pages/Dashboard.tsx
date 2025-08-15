@@ -85,6 +85,9 @@ const Dashboard = () => {
   const [isInitializingChat, setIsInitializingChat] = useState(false);
   const [shouldScrollToBottom, setShouldScrollToBottom] = useState(false);
 
+  // Ranking Dialog State
+  const [showRankingDialog, setShowRankingDialog] = useState({ show: false, packageId: null, packageTitle: '' });
+
   useEffect(() => {
     if (!user) {
       navigate('/login');
@@ -905,6 +908,16 @@ const Dashboard = () => {
                           >
                             {pkg.is_featured ? 'Beli Sekarang' : 'Beli Paket'}
                           </Button>
+                          
+                          {/* Ranking Button */}
+                          <Button 
+                            variant="outline"
+                            className="w-full mt-3 border-blue-200 text-blue-700 hover:bg-blue-50 hover:border-blue-300 transition-all duration-200 hover:scale-105 shadow-sm hover:shadow-md"
+                            onClick={() => setShowRankingDialog({ show: true, packageId: pkg.id, packageTitle: pkg.title })}
+                          >
+                            <Trophy className="w-4 h-4 mr-2" />
+                            Lihat Ranking
+                          </Button>
                         </CardContent>
                       </Card>
                     );
@@ -1089,14 +1102,27 @@ const Dashboard = () => {
                                 )}
                               </div>
                               
-                             
-                              <Button 
-                                className={`w-full ${variant} hover:scale-105 transition-all duration-300 shadow-xl hover:shadow-2xl text-white font-bold`}
-                                onClick={action}
-                              >
-                                {icon}
-                                {text}
-                              </Button>
+                              {/* Action Buttons - Main button and Ranking button */}
+                              <div className="space-y-3">
+                                {/* Main Tryout Button */}
+                                <Button 
+                                  className={`w-full ${variant} hover:scale-105 transition-all duration-300 shadow-xl hover:shadow-2xl text-white font-bold`}
+                                  onClick={action}
+                                >
+                                  {icon}
+                                  {text}
+                                </Button>
+                                
+                                {/* Ranking Button */}
+                                <Button 
+                                  variant="outline"
+                                  className="w-full border-blue-200 text-blue-700 hover:bg-blue-50 hover:border-blue-300 transition-all duration-200 hover:scale-105 shadow-sm hover:shadow-md"
+                                  onClick={() => setShowRankingDialog({ show: true, packageId: pkg.id, packageTitle: pkg.title })}
+                                >
+                                  <Trophy className="w-4 h-4 mr-2" />
+                                  Lihat Ranking
+                                </Button>
+                              </div>
                             </CardContent>
                           </Card>
                         );
@@ -1509,7 +1535,7 @@ const Dashboard = () => {
 
                 <Button 
                   onClick={() => setShowEditProfile(true)}
-                  className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 shadow-lg hover:shadow-xl transition-all duration-200"
+                  className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-105"
                 >
                   <Edit className="w-4 h-4 mr-2" />
                   Update Data Pribadi
@@ -1889,6 +1915,40 @@ const Dashboard = () => {
           </div>
         </div>
       )}
+
+      {/* Ranking Dialog */}
+      <Dialog open={showRankingDialog.show} onOpenChange={(open) => setShowRankingDialog({ ...showRankingDialog, show: open })}>
+        <DialogContent className="max-w-4xl bg-white/90 backdrop-blur-md border-0 shadow-2xl rounded-2xl">
+          <DialogHeader>
+            <DialogTitle className="bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
+              🏆 Ranking Tryout
+            </DialogTitle>
+            <DialogDescription className="text-blue-700">
+              Ranking peserta untuk paket: {showRankingDialog.packageTitle}
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="mt-6">
+            {showRankingDialog.packageId && (
+              <PackageRanking 
+                packageId={showRankingDialog.packageId} 
+                packageTitle={showRankingDialog.packageTitle}
+                limit={10}
+              />
+            )}
+          </div>
+          
+          <div className="flex justify-end pt-4">
+            <Button 
+              variant="outline" 
+              onClick={() => setShowRankingDialog({ show: false, packageId: null, packageTitle: '' })}
+              className="border-blue-200 text-blue-700 hover:bg-blue-50 hover:border-blue-300"
+            >
+              Tutup
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
