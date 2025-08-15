@@ -21,7 +21,9 @@ import {
   Banknote,
   Users,
   Filter,
-  Search
+  Search,
+  ChevronLeft,
+  ChevronRight
 } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { supabase } from "@/lib/db/supabase";
@@ -65,6 +67,11 @@ const AdminWithdrawalManagement = () => {
   const [adminNotes, setAdminNotes] = useState('');
   const [filterStatus, setFilterStatus] = useState<string>('all');
   const [searchTerm, setSearchTerm] = useState('');
+  
+  // Pagination state
+  const [currentWithdrawalPage, setCurrentWithdrawalPage] = useState(1);
+  const [currentBalancePage, setCurrentBalancePage] = useState(1);
+  const itemsPerPage = 5;
 
   useEffect(() => {
     loadWithdrawalData();
@@ -246,6 +253,136 @@ const AdminWithdrawalManagement = () => {
     return matchesStatus && matchesSearch;
   });
 
+  // Pagination functions
+  const getPaginatedWithdrawals = () => {
+    const startIndex = (currentWithdrawalPage - 1) * itemsPerPage;
+    const endIndex = startIndex + itemsPerPage;
+    return filteredWithdrawals.slice(startIndex, endIndex);
+  };
+
+  const getPaginatedBalances = () => {
+    const startIndex = (currentBalancePage - 1) * itemsPerPage;
+    const endIndex = startIndex + itemsPerPage;
+    return balances.slice(startIndex, endIndex);
+  };
+
+  const totalWithdrawalPages = Math.ceil(filteredWithdrawals.length / itemsPerPage);
+  const totalBalancePages = Math.ceil(balances.length / itemsPerPage);
+
+  // Reset pagination when filters change
+  useEffect(() => {
+    setCurrentWithdrawalPage(1);
+  }, [filterStatus, searchTerm]);
+
+  // Reset pagination when tab changes
+  const handleTabChange = (value: string) => {
+    if (value === 'withdrawals') {
+      setCurrentWithdrawalPage(1);
+    } else if (value === 'balances') {
+      setCurrentBalancePage(1);
+    }
+  };
+
+  // Compact Pagination Component
+  const CompactPagination = ({ 
+    currentPage, 
+    totalPages, 
+    onPageChange, 
+    label,
+    totalItems
+  }: { 
+    currentPage: number; 
+    totalPages: number; 
+    onPageChange: (page: number) => void; 
+    label: string;
+    totalItems: number;
+  }) => {
+    if (totalPages <= 1) return null;
+
+    const getPageNumbers = () => {
+      const pages = [];
+      const maxVisiblePages = 5;
+      
+      if (totalPages <= maxVisiblePages) {
+        for (let i = 1; i <= totalPages; i++) {
+          pages.push(i);
+        }
+      } else {
+        if (currentPage <= 3) {
+          for (let i = 1; i <= 4; i++) {
+            pages.push(i);
+          }
+          pages.push('...');
+          pages.push(totalPages);
+        } else if (currentPage >= totalPages - 2) {
+          pages.push(1);
+          pages.push('...');
+          for (let i = totalPages - 3; i <= totalPages; i++) {
+            pages.push(i);
+          }
+        } else {
+          pages.push(1);
+          pages.push('...');
+          for (let i = currentPage - 1; i <= currentPage + 1; i++) {
+            pages.push(i);
+          }
+          pages.push('...');
+          pages.push(totalPages);
+        }
+      }
+      
+      return pages;
+    };
+
+    return (
+      <div className="flex items-center justify-between mt-4 px-2">
+        <div className="text-sm text-gray-500">
+          Showing {((currentPage - 1) * itemsPerPage) + 1} to {Math.min(currentPage * itemsPerPage, totalItems)} of {totalItems} {label}
+        </div>
+        <div className="flex items-center space-x-1">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => onPageChange(currentPage - 1)}
+            disabled={currentPage === 1}
+            className="h-8 w-8 p-0"
+          >
+            <ChevronLeft className="w-4 h-4" />
+          </Button>
+          
+          <div className="flex items-center space-x-1">
+            {getPageNumbers().map((page, index) => (
+              <div key={index}>
+                {page === '...' ? (
+                  <span className="px-2 py-1 text-gray-400 text-sm">...</span>
+                ) : (
+                  <Button
+                    variant={currentPage === page ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => onPageChange(page as number)}
+                    className="h-8 w-8 p-0 text-sm"
+                  >
+                    {page}
+                  </Button>
+                )}
+              </div>
+            ))}
+          </div>
+          
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => onPageChange(currentPage + 1)}
+            disabled={currentPage === totalPages}
+            className="h-8 w-8 p-0"
+          >
+            <ChevronRight className="w-4 h-4" />
+          </Button>
+        </div>
+      </div>
+    );
+  };
+
   if (loading) {
     return (
       <div className="space-y-6">
@@ -317,7 +454,7 @@ const AdminWithdrawalManagement = () => {
       </div>
 
       {/* Tabs for Management */}
-      <Tabs defaultValue="withdrawals" className="space-y-4">
+      <Tabs defaultValue="withdrawals" className="space-y-4" onValueChange={handleTabChange}>
         <TabsList className="grid w-full grid-cols-2">
           <TabsTrigger value="withdrawals">Withdrawal Requests</TabsTrigger>
           <TabsTrigger value="balances">Mentor Balances</TabsTrigger>
@@ -370,7 +507,7 @@ const AdminWithdrawalManagement = () => {
                 </div>
               ) : (
                 <div className="space-y-4">
-                  {filteredWithdrawals.map((withdrawal) => (
+                  {getPaginatedWithdrawals().map((withdrawal) => (
                     <div key={withdrawal.id} className="border rounded-lg p-4">
                       <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
                         <div className="flex-1 space-y-3">
@@ -407,6 +544,15 @@ const AdminWithdrawalManagement = () => {
                       </div>
                     </div>
                   ))}
+                  
+                  {/* Pagination for Withdrawals */}
+                  <CompactPagination
+                    currentPage={currentWithdrawalPage}
+                    totalPages={totalWithdrawalPages}
+                    onPageChange={setCurrentWithdrawalPage}
+                    label="withdrawals"
+                    totalItems={filteredWithdrawals.length}
+                  />
                 </div>
               )}
             </CardContent>
@@ -432,7 +578,7 @@ const AdminWithdrawalManagement = () => {
                 </div>
               ) : (
                 <div className="space-y-4">
-                  {balances.map((balance) => (
+                  {getPaginatedBalances().map((balance) => (
                     <div key={balance.id} className="border rounded-lg p-4">
                       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                         <div>
@@ -457,6 +603,15 @@ const AdminWithdrawalManagement = () => {
                       </div>
                     </div>
                   ))}
+                  
+                  {/* Pagination for Balances */}
+                  <CompactPagination
+                    currentPage={currentBalancePage}
+                    totalPages={totalBalancePages}
+                    onPageChange={setCurrentBalancePage}
+                    label="balances"
+                    totalItems={balances.length}
+                  />
                 </div>
               )}
             </CardContent>
